@@ -76,7 +76,7 @@ async function key(pw,salt){const k=await crypto.subtle.importKey('raw',te.encod
 const aes=raw=>crypto.subtle.importKey('raw',raw,'AES-GCM',false,['encrypt','decrypt']);
 async function unwrap(j,pw){const w=j.pw;return new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:ub(w.iv)},await key(pw,ub(w.salt)),ub(w.ct)))}
 async function dec(buf,pw){const j=JSON.parse(td.decode(buf)),k=await unwrap(j,pw);
- const d=JSON.parse(td.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:ub(j.iv)},await aes(k),ub(j.ct)))));K=k;META={pw:j.pw,rsa:j.rsa};return d}
+ const d=JSON.parse(td.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:ub(j.iv)},await aes(k),ub(j.ct))));K=k;META={pw:j.pw,rsa:j.rsa};return d}
 async function enc(o){const iv=crypto.getRandomValues(new Uint8Array(12));
  const ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},await aes(K),te.encode(JSON.stringify(o))));
  return te.encode(JSON.stringify({v:2,pw:META.pw,rsa:META.rsa,iv:b64(iv),ct:b64(ct)}))}
