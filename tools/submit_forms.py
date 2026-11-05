@@ -90,10 +90,10 @@ def web(c):
         raise RuntimeError("Einwilligung liess sich nicht setzen")
     log("web captcha-frame:", captcha(g))
     form = g.locator('form:has(input[name="bewerbung_form[vorname]"])')
-    b = form.locator('button, input[type=submit]')
+    b = form.locator('button, input[type=submit], a')  # diamir: Absenden ist ein <a>Senden</a>
     names = [((b.nth(i).inner_text() or b.nth(i).get_attribute("value") or "").strip()[:30], b.nth(i).is_visible()) for i in range(b.count())]
     log("web buttons:", names)
-    hits = [i for i, (n, v) in enumerate(names) if v and re.search(r"(?i)absenden|senden|bewerb|submit", n)]
+    hits = [i for i, (n, v) in enumerate(names) if v and re.fullmatch(r"(?i)(bewerbung )?(ab)?senden|submit", n)]
     if len(hits) != 1:
         raise RuntimeError("Absende-Button nicht eindeutig: " + str(names))
     b.nth(hits[0]).click()
