@@ -1,92 +1,190 @@
 <!doctype html>
-<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex"><title>Bewerbungen</title>
+<html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex"><meta name="theme-color" content="#1f4fd1">
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
+<title>Bewerbungen 2027</title>
 <style>
-:root{--bg:#f6f6f3;--card:#fff;--fg:#1b1b1b;--mut:#666;--line:#e2e2dc;--acc:#1f5fd1;--ok:#1d7a3e;--warn:#a35c00;--bad:#b3261e}
-@media (prefers-color-scheme:dark){:root{--bg:#121212;--card:#1d1d1d;--fg:#eee;--mut:#9a9a9a;--line:#333;--acc:#6d9cff;--ok:#5cc47f;--warn:#e0a24a;--bad:#ff7b72}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 system-ui,Segoe UI,sans-serif}
-main{max-width:760px;margin:0 auto;padding:20px 16px 60px}h1{font-size:20px;margin:0 0 4px}.mut{color:var(--mut)}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:12px 0}
-.top{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.top h2{font-size:16px;margin:0;flex:1 1 100%}
-.pill{font-size:12px;padding:2px 9px;border-radius:99px;border:1px solid var(--line)}
-.beworben,.zusage{color:var(--ok);border-color:var(--ok)}.vorbereitet{color:var(--acc);border-color:var(--acc)}.nur_ein_monat{color:var(--warn);border-color:var(--warn)}.absage{color:var(--bad);border-color:var(--bad)}
-table{border-collapse:collapse;margin:8px 0;font-size:13.5px;width:100%}td{padding:2px 10px 2px 0;vertical-align:top;overflow-wrap:anywhere}td:first-child{color:var(--mut);white-space:nowrap}
-.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-button,a.b{font:inherit;font-size:14px;padding:9px 13px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer;text-decoration:none}
-button.go{background:var(--acc);border-color:var(--acc);color:#fff}button:disabled{opacity:.5}
-input{width:100%;font:inherit;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);margin:8px 0}
-.note{font-size:13px;color:var(--warn);margin:6px 0}pre{white-space:pre-wrap;font-size:12px;background:var(--bg);padding:10px;border-radius:6px;max-height:240px;overflow:auto}
-#lock{max-width:360px;margin:18vh auto 0}a{color:var(--acc)}
-</style></head><body><main>
-<div id="lock" class="card"><h1>Bewerbungen</h1><div class="mut">Passwort zum Entsperren</div>
-<input type="password" id="pw" autocomplete="current-password"><label class="mut"><input type="checkbox" id="keep" style="width:auto"> angemeldet bleiben</label>
-<div class="btns"><button class="go" id="unlock">Entsperren</button></div><div id="err" class="note"></div></div>
-<div id="app" hidden><h1>Bewerbungen · Praktikum 2027</h1><div class="mut" id="sub"></div><div id="list"></div><div id="runs"></div>
-<div class="btns"><button onclick="refresh()">Neu laden</button><button onclick="logout()">Abmelden</button></div></div>
-</main>
+:root{--bg:#f3f4f7;--card:#fff;--card2:#f7f8fb;--fg:#14161b;--mut:#6a7080;--line:#e3e6ec;--acc:#1f4fd1;--acc2:#e8eefc;--ok:#16834a;--ok2:#e3f5ea;--warn:#a65d00;--warn2:#fdf1df;--bad:#b42318;--bad2:#fde8e6;--sh:0 1px 2px rgba(0,0,0,.05),0 4px 16px rgba(0,0,0,.05)}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1115;--card:#181b21;--card2:#1f232b;--fg:#eceef2;--mut:#9097a6;--line:#2a2f39;--acc:#7aa2ff;--acc2:#1c2640;--ok:#4cc985;--ok2:#14281d;--warn:#f0ac4c;--warn2:#2c2112;--bad:#ff8a7d;--bad2:#2e1715;--sh:none}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0}body{background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+a{color:var(--acc)}h1,h2,h3{margin:0;letter-spacing:-.01em}.mut{color:var(--mut)}.sm{font-size:13px}
+header{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.hd{max-width:820px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:10px}.hd h1{font-size:17px;flex:1}
+.back{border:0;background:none;color:var(--acc);font-size:15px;padding:4px 6px 4px 0;cursor:pointer}
+main{max-width:820px;margin:0 auto;padding:12px 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:12px 0;box-shadow:var(--sh)}
+.hero{background:linear-gradient(135deg,#1f4fd1,#5b3fd1);color:#fff;border:0}.hero .mut{color:#dfe5ff}
+.big{font-size:40px;font-weight:700;line-height:1.1;letter-spacing:-.02em}
+.bar{display:flex;height:10px;border-radius:99px;overflow:hidden;background:rgba(255,255,255,.25);margin:12px 0 6px}.bar i{display:block}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;box-shadow:var(--sh)}
+.tile b{display:block;font-size:24px}.tile span{font-size:12px;color:var(--mut)}
+.sec{font-size:13px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;margin:22px 4px 6px}
+.row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);cursor:pointer}.row:last-child{border:0}
+.list{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:var(--sh)}
+.dot{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-weight:700;font-size:14px;flex:none}
+.row .t{flex:1;min-width:0}.row .t b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.chev{color:var(--mut)}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:99px;background:var(--card2);color:var(--mut)}
+.s-beworben,.s-zusage{background:var(--ok2);color:var(--ok)}.s-vorbereitet{background:var(--acc2);color:var(--acc)}.s-nur_ein_monat{background:var(--warn2);color:var(--warn)}.s-absage{background:var(--bad2);color:var(--bad)}
+.btn{font:inherit;font-weight:600;font-size:15px;padding:11px 16px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn.go{background:var(--acc);border-color:var(--acc);color:#fff}.btn.full{width:100%}.btn:disabled{opacity:.5}
+.btns{display:flex;gap:8px;flex-wrap:wrap}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.kv{display:grid;grid-template-columns:max-content 1fr;gap:4px 14px;font-size:14px}.kv dt{color:var(--mut)}.kv dd{margin:0;overflow-wrap:anywhere}
+.note{background:var(--warn2);color:var(--warn);border-radius:12px;padding:10px 12px;font-size:14px;margin:10px 0}
+.letter{background:var(--card2);border-radius:12px;padding:14px;font-size:14px}.letter p{margin:0 0 10px}
+.steps{list-style:none;padding:0;margin:8px 0 0}.steps li{display:flex;gap:10px;padding:5px 0;font-size:14px}.steps .ic{width:20px;text-align:center}
+textarea,input[type=password]{width:100%;font:inherit;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card2);color:var(--fg)}
+textarea{min-height:90px;resize:vertical}
+nav.tabs{position:fixed;bottom:0;left:0;right:0;z-index:6;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom)}
+nav.tabs a{flex:1;max-width:160px;text-align:center;padding:9px 0 8px;font-size:11.5px;color:var(--mut);text-decoration:none}nav.tabs a svg{display:block;margin:0 auto 2px;width:22px;height:22px}
+nav.tabs a.on{color:var(--acc)}
+#lock{max-width:380px;margin:16vh auto 0;text-align:center}#lock img{width:72px;border-radius:18px}
+.toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;z-index:20;max-width:90vw}
+#modal{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.85);display:flex;flex-direction:column}#modal[hidden]{display:none}
+#modal .mh{display:flex;gap:8px;align-items:center;padding:10px 12px;color:#fff}#modal .mh b{flex:1;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#modal .mb{flex:1;overflow:auto;padding:0 8px 20px;text-align:center}#modal canvas,#modal img{max-width:100%;background:#fff;margin:6px auto;display:block;border-radius:4px}
+#modal .btn{padding:7px 12px;font-size:14px}
+details summary{cursor:pointer;font-weight:600;padding:2px 0}pre{white-space:pre-wrap;font-size:12px;background:var(--card2);padding:10px;border-radius:10px;max-height:260px;overflow:auto}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .8s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
+@media (min-width:700px){.tiles{grid-template-columns:repeat(4,1fr)}}
+</style></head><body>
+<div id="lock" class="card" hidden><img src="icon-192.png" alt=""><h2 style="margin:12px 0 4px">Bewerbungen 2027</h2><div class="mut sm">Passwort zum Entsperren</div>
+<input type="password" id="pw" autocomplete="current-password" style="margin:14px 0 8px">
+<label class="mut sm" style="display:block;text-align:left;margin-bottom:12px"><input type="checkbox" id="keep" checked> angemeldet bleiben</label>
+<button class="btn go full" id="unlock">Entsperren</button><div id="err" class="mut sm" style="margin-top:10px"></div></div>
+<div id="shell" hidden><header><div class="hd"><button class="back" id="back" hidden onclick="history.back()">‹ Zurück</button><h1 id="title">Übersicht</h1><span id="sync" class="mut sm"></span></div></header>
+<main id="view"></main>
+<nav class="tabs">
+<a href="#home" data-v="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Übersicht</a>
+<a href="#list" data-v="list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Stellen</a>
+<a href="#docs" data-v="docs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>Unterlagen</a>
+<a href="#log" data-v="log"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Verlauf</a>
+</nav></div>
+<div id="modal" hidden><div class="mh"><b id="mt"></b><a class="btn" id="mdl" download>Speichern</a><button class="btn" onclick="closeModal()">✕</button></div><div class="mb" id="mb"></div></div>
 <script>
-const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const te=new TextEncoder(),td=new TextDecoder();let PW,D,SHA,poll;
+const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const te=new TextEncoder(),td=new TextDecoder();let PW,D,SHA,RUN=null,pollT;
 const ls={get:k=>{try{return localStorage.getItem(k)}catch(e){}},set:(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}}};
+const START=new Date('2027-07-05'),DAY=864e5,today=()=>new Date(new Date().toDateString());
+const fmt=d=>d.toLocaleDateString('de-AT',{day:'2-digit',month:'2-digit',year:'numeric'});
+const STAT={vorbereitet:'Bereit',beworben:'Beworben',nur_ein_monat:'Nur 1 Monat',absage:'Absage',zusage:'Zusage'};
+const DONE=['beworben','absage','zusage'];
+// ---------- Krypto (gleiches Format wie crypt.py) ----------
 async function key(pw,salt){const k=await crypto.subtle.importKey('raw',te.encode(pw),'PBKDF2',false,['deriveKey']);
  return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:600000,hash:'SHA-256'},k,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
 async function dec(buf,pw){const b=new Uint8Array(buf);return JSON.parse(td.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:b.slice(16,28)},await key(pw,b.slice(0,16)),b.slice(28))))}
-async function enc(obj,pw){const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));
- const ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},await key(pw,salt),te.encode(JSON.stringify(obj))));
- const out=new Uint8Array(28+ct.length);out.set(salt);out.set(iv,16);out.set(ct,28);return out}
+async function enc(o,pw){const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));
+ const ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},await key(pw,salt),te.encode(JSON.stringify(o))));const out=new Uint8Array(28+ct.length);out.set(salt);out.set(iv,16);out.set(ct,28);return out}
 const b64=u=>{let s='';for(let i=0;i<u.length;i+=32768)s+=String.fromCharCode(...u.subarray(i,i+32768));return btoa(s)};
-const gh=(p,o={})=>fetch('https://api.github.com/repos/'+D.repo+p,{...o,headers:{Authorization:'Bearer '+D.token,Accept:'application/vnd.github+json',...(o.headers||{})}});
-async function unlock(pw){
- const r=await fetch('data.bin?'+Date.now());D=await dec(await r.arrayBuffer(),pw);PW=pw;
- $('#lock').hidden=true;$('#app').hidden=false;render();refresh();
-}
-$('#unlock').onclick=async()=>{$('#err').textContent='entsperre …';try{await unlock($('#pw').value);if($('#keep').checked)ls.set('pw',$('#pw').value)}catch(e){$('#err').textContent='Falsches Passwort'}};
+const bytes=n=>{const b=atob(D.files[n]),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u};
+// ---------- GitHub ----------
+const gh=(p,o={})=>fetch('https://api.github.com/repos/'+D.repo+p,{...o,cache:'no-store',headers:{Authorization:'Bearer '+D.token,Accept:'application/vnd.github+json',...(o.headers||{})}});
+async function pull(){try{$('#sync').innerHTML='<span class="spin"></span>';const j=await (await gh('/contents/data.bin')).json();
+ if(j.sha&&j.sha!=SHA){const r=await gh('/contents/data.bin',{headers:{Accept:'application/vnd.github.raw'}});D=await dec(await r.arrayBuffer(),PW);SHA=j.sha;render()}
+ $('#sync').textContent='✓ aktuell'}catch(e){$('#sync').textContent='offline'}}
+async function save(msg){$('#sync').innerHTML='<span class="spin"></span>';const r=await gh('/contents/data.bin',{method:'PUT',body:JSON.stringify({message:msg,content:b64(await enc(D,PW)),sha:SHA})});
+ if(!r.ok){toast('Speichern fehlgeschlagen ('+r.status+'), lade neu');SHA=null;return pull()}SHA=(await r.json()).content.sha;$('#sync').textContent='✓ gespeichert';render()}
+// ---------- Logik ----------
+const S=id=>D.stellen.find(s=>s.id==id);
+const appliedAt=s=>{const m=/^(\d{4}-\d{2}-\d{2})/.exec(s.bewerben||'');return m?new Date(m[1]):null};
+function followUp(s){const a=appliedAt(s);if(s.status!='beworben'||!a)return null;return new Date(+a+(s.id.startsWith('OEBB')?28:14)*DAY)}
+function todos(){const t=[];
+ for(const s of D.stellen){
+  if(s.status=='vorbereitet'&&s.weg.art=='formular')t.push({p:1,id:s.id,txt:'Abschicken',sub:s.firma,ic:'🚀'});
+  else if(s.status=='vorbereitet')t.push({p:2,id:s.id,txt:'Im Portal bewerben',sub:s.firma,ic:'🌐'});
+  else if(s.status=='nur_ein_monat')t.push({p:4,id:s.id,txt:'Optional, nur 1 Monat',sub:s.firma,ic:'🧩'});
+  const f=followUp(s);if(f)t.push(f<=today()?{p:0,id:s.id,txt:'Nachfragen',sub:s.firma+' · seit '+fmt(appliedAt(s))+' keine Antwort',ic:'📞'}:{p:5,id:s.id,txt:'Antwort abwarten',sub:s.firma+' · nachfragen ab '+fmt(f),ic:'⏳'});
+ }
+ for(const o of D.offen||[])t.push({p:3,txt:'Von dir',sub:typeof o=='string'?o:JSON.stringify(o),ic:'📝'});
+ return t.sort((a,b)=>a.p-b.p)}
+const initials=f=>f.replace(/[^A-Za-zÄÖÜ& ]/g,'').split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+const pill=s=>`<span class="pill s-${s}">${esc(STAT[s]||s)}</span>`;
+function row(s,sub){return `<div class="row" onclick="go('s/${s.id}')"><div class="dot pill s-${s.status}">${esc(initials(s.firma))}</div><div class="t"><b>${esc(s.firma)}</b><span class="mut sm">${sub??esc(STAT[s.status]||s.status)+' · Score '+s.score}</span></div><span class="chev">›</span></div>`}
+// ---------- Views ----------
+const V={
+home(){const n=D.stellen.length,c=k=>D.stellen.filter(s=>k.includes(s.status)).length,days=Math.ceil((START-today())/DAY);
+ const seg=[['zusage','#4cc985'],['beworben','#9be7b8'],['vorbereitet','#ffffff'],['nur_ein_monat','#ffd08a'],['absage','#ff9b90']];
+ const t=todos();
+ return `<div class="card hero"><div class="mut sm">Praktikumsstart 5. Juli 2027</div><div class="big">${days} Tage</div>
+ <div class="bar">${seg.map(([k,col])=>`<i style="width:${c([k])/n*100}%;background:${col}"></i>`).join('')}</div>
+ <div class="sm">${c(['beworben','zusage','absage'])} von ${n} Bewerbungen draußen${c(['zusage'])?' · 🎉 '+c(['zusage'])+' Zusage':''}</div></div>
+ <div class="tiles"><div class="tile"><b>${c(['vorbereitet'])}</b><span>bereit</span></div><div class="tile"><b>${c(['beworben'])}</b><span>beworben</span></div><div class="tile"><b>${c(['zusage'])}</b><span>Zusagen</span></div>
+ </div>
+ ${RUN?runCard():''}
+ <div class="sec">Als Nächstes</div><div class="list">${t.length?t.slice(0,6).map(x=>`<div class="row" ${x.id?`onclick="go('s/${x.id}')"`:''}><div class="dot" style="background:var(--card2)">${x.ic}</div><div class="t"><b>${esc(x.txt)}</b><span class="mut sm">${esc(x.sub)}</span></div>${x.id?'<span class="chev">›</span>':''}</div>`).join(''):'<div class="row mut">Nichts offen 👌</div>'}</div>
+ <div class="sec">Hinweis</div><div class="card sm mut" style="margin-top:0">Juli <b>und</b> August nötig. 1-Monats-Stellen zählen nur, wenn zwei zusammen beide Monate abdecken.</div>`},
+list(){const g=[['Offen',s=>!DONE.includes(s.status)],['Beworben',s=>s.status=='beworben'],['Abgeschlossen',s=>['absage','zusage'].includes(s.status)]];
+ return g.map(([h,f])=>{const l=D.stellen.filter(f).sort((a,b)=>b.score-a.score);return l.length?`<div class="sec">${h} · ${l.length}</div><div class="list">${l.map(s=>row(s)).join('')}</div>`:''}).join('')},
+docs(){const f=Object.keys(D.files).filter(n=>/\.(pdf|png)$/.test(n)).sort();
+ return `<div class="sec">Deine Unterlagen</div><div class="list">${f.map(n=>`<div class="row" onclick="view('${esc(n)}')"><div class="dot" style="background:var(--card2)">${n.endsWith('.png')?'🖼️':'📄'}</div><div class="t"><b>${esc(n.replace(/^screens\//,'Bestätigung: ').replace(/_/g,' ').replace(/\.(pdf|png)$/,''))}</b><span class="mut sm">${Math.round(D.files[n].length*.75/1024)} KB</span></div><span class="chev">›</span></div>`).join('')}</div>
+ <div class="card sm mut">Anschreiben bearbeiten geht am PC (Bewerbungen.bat), weil die PDFs über Word gebaut werden. Danach <code>build_site.py</code>, dann ist es hier.</div>`},
+log(){const r=D.laeufe||[];const ev=D.stellen.filter(s=>s.bewerben).map(s=>({d:s.bewerben.slice(0,10),t:s.firma,x:s.bewerben.slice(11)})).sort((a,b)=>b.d.localeCompare(a.d));
+ return `${RUN?runCard():''}<div class="sec">Bewerbungen</div><div class="list">${ev.map(e=>`<div class="row" style="cursor:default"><div class="dot pill s-beworben">✓</div><div class="t"><b>${esc(e.t)}</b><span class="mut sm">${esc(fmt(new Date(e.d)))} · ${esc(e.x)}</span></div></div>`).join('')||'<div class="row mut">noch keine</div>'}</div>
+ <div class="sec">Abschick-Läufe</div>${r.length?r.map(x=>`<div class="card"><details><summary>${x.ok?'✅':'⚠️'} ${esc(S(x.id)?.firma||x.id)} <span class="mut sm">· ${esc(x.zeit)}</span></summary><pre>${esc(x.log)}</pre></details></div>`).join(''):'<div class="card mut sm">noch keine</div>'}
+ <div class="btns" style="margin-top:16px"><button class="btn" onclick="pull()">Neu laden</button><button class="btn" onclick="logout()">Abmelden</button></div>`},
+s(id){const s=S(id);if(!s)return '<div class="card">Nicht gefunden</div>';const w=s.weg||{},b=s.brief,done=DONE.includes(s.status);
+ const steps=[[!!s.pdf,'Anschreiben erstellt'],[true,'Lebenslauf aktuell'],[DONE.includes(s.status),'Bewerbung abgeschickt'],[['absage','zusage'].includes(s.status),'Antwort erhalten']];
+ let act='';
+ if(!done&&w.art=='formular'&&w.auto)act=`<button class="btn go full" id="sbtn" onclick="submitJob('${s.id}')" ${RUN&&!RUN.done?'disabled':''}>🚀 Jetzt abschicken</button>`;
+ if(!done&&w.art=='portal')act=`<a class="btn go full" target="_blank" rel="noopener" href="${esc(w.url)}">🌐 Im Portal bewerben</a>`;
+ if(!done&&w.art=='mail'&&b)act=`<a class="btn go full" href="mailto:${esc(w.an)}?subject=${encodeURIComponent(b.betreff)}&body=${encodeURIComponent([b.anrede,...b.absaetze,'Mit freundlichen Grüßen',D.name].join('\n\n'))}">✉️ Mail öffnen</a><div class="mut sm" style="margin-top:6px">Anhänge selbst dazugeben: Anschreiben + Lebenslauf (unter Unterlagen speichern).</div>`;
+ const f=followUp(s);
+ return `<div class="card"><div style="display:flex;gap:12px;align-items:center"><div class="dot pill s-${s.status}" style="width:48px;height:48px;font-size:17px">${esc(initials(s.firma))}</div><div style="flex:1"><h2 style="font-size:19px">${esc(s.firma)}</h2><div>${pill(s.status)} <span class="pill">Score ${s.score}/10</span></div></div></div>
+ ${s.bewerben?`<div class="sm" style="margin-top:12px">✓ ${esc(s.bewerben)}</div>`:''}${f?`<div class="sm mut">${f<=today()?'📞 Zeit zum Nachfragen':'Nachfragen ab '+fmt(f)}</div>`:''}
+ ${w.hinweis?`<div class="note">${esc(w.hinweis)}</div>`:''}<div style="margin-top:12px">${act}</div>
+ ${RUN&&RUN.id==s.id?runCard(true):''}</div>
+ <div class="card"><ul class="steps">${steps.map(([o,t])=>`<li><span class="ic">${o?'✅':'⬜️'}</span>${t}</li>`).join('')}</ul></div>
+ <div class="grid2">${s.pdf&&D.files[s.pdf]?`<button class="btn" onclick="view('${s.pdf}')">📄 Anschreiben</button>`:''}${D.files['Lebenslauf_Sadaat.pdf']?`<button class="btn" onclick="view('Lebenslauf_Sadaat.pdf')">📄 Lebenslauf</button>`:''}
+ ${s.shot&&D.files[s.shot]?`<button class="btn" onclick="view('${s.shot}')">🖼️ Bestätigung</button>`:''}<a class="btn" href="${esc(s.url)}" target="_blank" rel="noopener">🔗 Inserat</a></div>
+ ${w.felder?`<div class="sec">Was gesendet wird</div><div class="card" style="margin-top:0"><dl class="kv">${Object.entries(w.felder).map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl></div>`:''}
+ ${b?`<div class="sec">Anschreiben</div><div class="letter"><p><b>${esc(b.betreff)}</b></p><p>${esc(b.anrede)}</p>${b.absaetze.map(p=>`<p>${esc(p)}</p>`).join('')}</div>`:''}
+ <div class="sec">Infos</div><div class="card" style="margin-top:0"><dl class="kv">${s.kontakt?`<dt>Kontakt</dt><dd>${esc(s.kontakt)}</dd>`:''}${s.frist?`<dt>Frist</dt><dd>${esc(s.frist)}</dd>`:''}${s.unklar?`<dt>Unklar</dt><dd>${esc(s.unklar)}</dd>`:''}</dl></div>
+ <div class="sec">Notiz</div><textarea id="note" placeholder="z. B. Anruf am …, Ansprechperson …">${esc(s.notiz||'')}</textarea>
+ <div class="btns" style="margin-top:8px"><button class="btn" onclick="saveNote('${s.id}')">Notiz speichern</button></div>
+ <div class="sec">Status ändern</div><div class="grid2">${['beworben','zusage','absage','vorbereitet'].filter(x=>x!=s.status).map(x=>`<button class="btn" onclick="mark('${s.id}','${x}')">${pill(x)}</button>`).join('')}</div>`}
+};
+function runCard(inl){const r=RUN,s=S(r.id);const icon=x=>x.conclusion=='success'?'✅':x.conclusion?'⚠️':x.status=='in_progress'?'<span class="spin"></span>':'⬜️';
+ return `<div class="${inl?'':'card'}" style="${inl?'margin-top:14px':''}"><b>${r.done?(r.ok?'✅ Fertig':'⚠️ Lauf beendet'):'<span class="spin"></span> Wird abgeschickt'}</b> <span class="mut sm">· ${esc(s?.firma||r.id)}</span>
+ <ul class="steps">${(r.steps||[]).filter(x=>!/^(Set up|Post|Complete)/.test(x.name)).map(x=>`<li><span class="ic">${icon(x)}</span>${esc(x.name.replace(/^Run /,'').slice(0,48))}</li>`).join('')||'<li class="mut">wartet auf GitHub-Server …</li>'}</ul></div>`}
+// ---------- Aktionen ----------
+async function submitJob(id){const s=S(id);if(!confirm(`Bewerbung an ${s.firma} jetzt wirklich abschicken?\n\nEin Server füllt das Formular aus und klickt auf Absenden.`))return;
+ const t0=Date.now();const r=await gh('/actions/workflows/submit.yml/dispatches',{method:'POST',body:JSON.stringify({ref:'main',inputs:{id}})});
+ if(!r.ok)return toast('Start fehlgeschlagen ('+r.status+')');RUN={id,since:t0,steps:[]};render();toast('Gestartet, dauert ca. 2–3 Minuten');setTimeout(track,5000)}
+async function track(){clearTimeout(pollT);try{
+ const j=await (await gh('/actions/workflows/submit.yml/runs?per_page=1')).json();const run=j.workflow_runs?.[0];if(!run)return;
+ const fresh=RUN&&!RUN.run&&new Date(run.created_at)>=new Date(RUN.since-60000);
+ if(!RUN&&run.status!='completed')RUN={id:(run.display_title||'').replace('submit ',''),since:+new Date(run.created_at)};
+ if(RUN&&(fresh||RUN.run==run.id)){RUN.run=run.id;const jobs=await (await gh('/actions/runs/'+run.id+'/jobs')).json();RUN.steps=jobs.jobs?.[0]?.steps||[];
+  if(run.status=='completed'){RUN.done=true;SHA=null;await pull();const s=S(RUN.id);RUN.ok=s&&s.status=='beworben';toast(RUN.ok?'Abgeschickt ✅':'Nicht abgeschickt, siehe Verlauf');render();return}render()}
+ if(RUN&&!RUN.done)pollT=setTimeout(track,6000)}catch(e){pollT=setTimeout(track,10000)}}
+async function mark(id,st){if(!confirm(`Status auf „${STAT[st]}“ setzen?`))return;const s=S(id);s.status=st;
+ if(st=='beworben'&&!s.bewerben)s.bewerben=new Date().toISOString().slice(0,10)+' manuell markiert';await save('status '+id+' '+st);toast('Gespeichert')}
+async function saveNote(id){S(id).notiz=$('#note').value;await save('notiz '+id);toast('Notiz gespeichert')}
+function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.append(t);setTimeout(()=>t.remove(),2600)}
+// ---------- Viewer (pdf.js) ----------
+let pdfjs;async function loadPdf(){if(pdfjs)return pdfjs;await new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';s.onload=ok;s.onerror=no;document.head.append(s)});
+ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';return pdfjs=pdfjsLib}
+async function view(n){const u=bytes(n),isPdf=n.endsWith('.pdf'),url=URL.createObjectURL(new Blob([u],{type:isPdf?'application/pdf':'image/png'}));
+ $('#mt').textContent=n.split('/').pop();$('#mdl').href=url;$('#mdl').download=n.split('/').pop();$('#mb').innerHTML='<div style="color:#fff;padding:20px"><span class="spin"></span></div>';$('#modal').hidden=false;history.pushState({m:1},'');
+ if(!isPdf){$('#mb').innerHTML=`<img src="${url}">`;return}
+ try{const lib=await loadPdf(),doc=await lib.getDocument({data:u}).promise;$('#mb').innerHTML='';const W=Math.min(innerWidth-16,900)*devicePixelRatio;
+  for(let i=1;i<=doc.numPages;i++){const p=await doc.getPage(i),v0=p.getViewport({scale:1}),v=p.getViewport({scale:W/v0.width}),c=document.createElement('canvas');c.width=v.width;c.height=v.height;c.style.width=(v.width/devicePixelRatio)+'px';$('#mb').append(c);await p.render({canvasContext:c.getContext('2d'),viewport:v}).promise}}
+ catch(e){$('#mb').innerHTML=`<p style="color:#fff">Vorschau nicht möglich. <a style="color:#9cf" href="${url}" target="_blank">Öffnen</a></p>`}}
+function closeModal(){if(!$('#modal').hidden){$('#modal').hidden=true;$('#mb').innerHTML=''}}
+// ---------- Routing ----------
+function go(r){location.hash=r}
+function render(){if(!D)return;const h=(location.hash.slice(1)||'home'),[v,arg]=h.split('/');const fn=V[v]||V.home;
+ $('#view').innerHTML=fn(arg);$('#title').textContent=v=='s'?'Stelle':{home:'Übersicht',list:'Stellen',docs:'Unterlagen',log:'Verlauf'}[v]||'Übersicht';
+ $('#back').hidden=v!='s';document.querySelectorAll('nav.tabs a').forEach(a=>a.classList.toggle('on',a.dataset.v==(v=='s'?'list':v)))}
+let lastHash=location.hash;addEventListener('hashchange',()=>{const sameView=location.hash.split('/')[0]==lastHash.split('/')[0]&&!location.hash.includes('/');lastHash=location.hash;render();if(!sameView)scrollTo(0,0)});
+addEventListener('popstate',()=>closeModal());
+// ---------- Start ----------
+async function unlock(pw){const r=await fetch('data.bin?'+Date.now(),{cache:'no-store'});D=await dec(await r.arrayBuffer(),pw);PW=pw;
+ $('#lock').hidden=true;$('#shell').hidden=false;render();await pull();track()}
+$('#unlock').onclick=async()=>{$('#err').innerHTML='<span class="spin"></span> entsperre …';try{await unlock($('#pw').value);if($('#keep').checked)ls.set('pw',$('#pw').value)}catch(e){$('#err').textContent='Falsches Passwort (oder offline)'}};
 $('#pw').onkeydown=e=>{if(e.key=='Enter')$('#unlock').click()};
-function logout(){ls.set('pw',null);location.reload()}
-async function refresh(){ // frische Daten direkt aus dem Repo (Pages cached ein paar Minuten)
- try{const r=await gh('/contents/data.bin');const j=await r.json();SHA=j.sha;
-  const raw=await gh('/contents/data.bin',{headers:{Accept:'application/vnd.github.raw'}});D=await dec(await raw.arrayBuffer(),PW);render()}catch(e){console.warn(e)}
- checkRuns();
-}
-async function save(msg){const body=await enc(D,PW);
- const r=await gh('/contents/data.bin',{method:'PUT',body:JSON.stringify({message:msg,content:b64(body),sha:SHA})});
- if(!r.ok){alert('Speichern fehlgeschlagen: '+r.status);return refresh()}SHA=(await r.json()).content.sha;render()}
-function fileUrl(n){const b=atob(D.files[n]),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);
- return URL.createObjectURL(new Blob([u],{type:n.endsWith('.png')?'image/png':'application/pdf'}))}
-function openFile(n){window.open(fileUrl(n),'_blank')}
-function render(){
- $('#sub').textContent='Juli + August 2027 · '+D.stellen.filter(s=>s.status=='beworben').length+' von '+D.stellen.length+' beworben';
- $('#list').innerHTML=(D.offen&&D.offen.length?`<div class="card"><b>Fehlt noch von dir</b><ul>${D.offen.map(x=>`<li>${esc(typeof x=='string'?x:JSON.stringify(x))}</li>`).join('')}</ul></div>`:'')+
-  D.stellen.slice().sort((a,b)=>(a.status=='beworben')-(b.status=='beworben')||b.score-a.score).map(card).join('');
- const r=D.laeufe||[];$('#runs').innerHTML=r.length?`<div class="card"><b>Letzte Abschick-Läufe</b>${r.slice(0,3).map(x=>`<details><summary>${esc(x.zeit)} · ${esc(x.id)} · ${x.ok?'✔ abgeschickt':'✖ nicht abgeschickt'}</summary><pre>${esc(x.log)}</pre></details>`).join('')}</div>`:'';
-}
-function card(s){
- const w=s.weg,done=['beworben','absage','zusage'].includes(s.status);let act='';
- if(w.art=='formular'&&w.auto)act=`<button class="go" ${done?'disabled':''} onclick="submitJob('${s.id}',this)">Abschicken</button>`;
- if(w.art=='portal')act=`<a class="b" target="_blank" rel="noopener" href="${esc(w.url)}">Zur Bewerbung</a>`;
- if(w.art=='mail'&&s.brief){const b=s.brief,body=[b.anrede,...b.absaetze,'Mit freundlichen Grüßen',D.name].join('\n\n');
-  act=`<a class="b" href="mailto:${w.an}?subject=${encodeURIComponent(b.betreff)}&body=${encodeURIComponent(body)}">Mail öffnen (PDFs anhängen)</a>`}
- const f=w.felder?`<details><summary>Was gesendet wird</summary><table>${Object.entries(w.felder).map(([k,v])=>`<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join('')}</table></details>`:'';
- const br=s.brief?`<details><summary>Anschreiben-Text</summary><p><b>${esc(s.brief.betreff)}</b></p><p>${esc(s.brief.anrede)}</p>${s.brief.absaetze.map(p=>`<p>${esc(p)}</p>`).join('')}</details>`:'';
- return `<div class="card"><div class="top"><h2>${esc(s.firma)}</h2><span class="pill">Score ${s.score}</span><span class="pill ${s.status}">${esc(s.status)}</span></div>
- <div class="mut" style="font-size:13px"><a href="${esc(s.url)}" target="_blank" rel="noopener">Inserat</a>${s.frist?' · Frist: '+esc(s.frist):''}${s.kontakt?' · '+esc(s.kontakt):''}</div>
- ${s.bewerben?`<div style="margin-top:6px">✔ ${esc(s.bewerben)}</div>`:''}${w.hinweis?`<div class="note">${esc(w.hinweis)}</div>`:''}
- ${s.unklar?`<details><summary class="mut">Unklar</summary><div class="mut" style="font-size:13px">${esc(s.unklar)}</div></details>`:''}${f}${br}
- <div class="btns">${act}${s.pdf&&D.files[s.pdf]?`<button onclick="openFile('${s.pdf}')">Anschreiben</button>`:''}<button onclick="openFile('Lebenslauf_Sadaat.pdf')">Lebenslauf</button>
- ${s.shot&&D.files[s.shot]?`<button onclick="openFile('${s.shot}')">Bestätigung</button>`:''}
- <select onchange="mark('${s.id}',this.value)" style="font:inherit;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg)"><option value="">Status …</option>${['beworben','absage','zusage','vorbereitet'].map(x=>`<option>${x}</option>`).join('')}</select></div></div>`;
-}
-async function mark(id,st){if(!st||!confirm(`Status auf „${st}“?`))return render();const s=D.stellen.find(x=>x.id==id);s.status=st;
- if(st=='beworben'&&!s.bewerben)s.bewerben=new Date().toISOString().slice(0,10)+' manuell markiert';await save('status '+id+' '+st)}
-async function submitJob(id,btn){const s=D.stellen.find(x=>x.id==id);
- if(!confirm(`Bewerbung an ${s.firma} jetzt wirklich abschicken?`))return;btn.disabled=true;btn.textContent='startet …';
- const r=await gh('/actions/workflows/submit.yml/dispatches',{method:'POST',body:JSON.stringify({ref:'main',inputs:{id}})});
- if(!r.ok){alert('Start fehlgeschlagen: '+r.status);btn.disabled=false;btn.textContent='Abschicken';return}
- btn.textContent='läuft (ca. 2–3 Min) …';setTimeout(checkRuns,8000)}
-async function checkRuns(){clearTimeout(poll);
- try{const j=await (await gh('/actions/workflows/submit.yml/runs?per_page=1')).json();const run=j.workflow_runs&&j.workflow_runs[0];
-  if(run&&run.status!='completed'){$('#sub').textContent='⏳ Abschicken läuft …';poll=setTimeout(checkRuns,10000)}
-  else if(run&&ls.get('lastRun')!=String(run.id)){ls.set('lastRun',run.id);const r=await gh('/contents/data.bin');const j2=await r.json();
-   if(j2.sha!=SHA){SHA=j2.sha;D=await dec(await (await gh('/contents/data.bin',{headers:{Accept:'application/vnd.github.raw'}})).arrayBuffer(),PW);render()}}}catch(e){}}
-const saved=ls.get('pw');if(saved)unlock(saved).catch(()=>ls.set('pw',null));
+function logout(){ls.set('pw',null);location.hash='';location.reload()}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&D)pull()});
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+const saved=ls.get('pw');if(saved)unlock(saved).catch(()=>{ls.set('pw',null);$('#lock').hidden=false});else $('#lock').hidden=false;
 </script></body></html>
