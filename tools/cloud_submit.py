@@ -4,6 +4,12 @@ import base64, datetime, json, os, pathlib, subprocess, sys
 import crypt
 
 i = sys.argv[1]
+if i == "_test":  # Browser-Check ohne Bewerbung
+    from playwright.sync_api import sync_playwright
+    with sync_playwright() as p:
+        b = p.chromium.launch(channel="chrome", headless=True); g = b.new_page(); g.goto("https://example.com")
+        print("BROWSER OK", g.title()); b.close()
+    sys.exit(0)
 d, K, meta = crypt.open_(pathlib.Path("data.bin").read_bytes(), priv=crypt.private_key())
 s = next(x for x in d["stellen"] if x["id"] == i)
 auto = s["weg"].get("auto")
