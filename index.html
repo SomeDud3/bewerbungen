@@ -199,7 +199,10 @@ function render(){if(!D)return;const h=(location.hash.slice(1)||'home'),[v,arg]=
 let lastHash=location.hash;addEventListener('hashchange',()=>{const sameView=location.hash.split('/')[0]==lastHash.split('/')[0]&&!location.hash.includes('/');lastHash=location.hash;render();if(!sameView)scrollTo(0,0)});
 addEventListener('popstate',()=>closeModal());
 // ---------- Start ----------
-async function unlock(pw){const r=await fetch('data.bin?'+Date.now(),{cache:'no-store'});D=await dec(await r.arrayBuffer(),pw);PW=pw;
+async function fetchBin(){ // frisch direkt aus dem Repo (Pages haengt nach Aenderungen ~1 Min hinterher), sonst Pages/Cache
+ try{const r=await fetch('https://api.github.com/repos/SomeDud3/bewerbungen/contents/data.bin',{cache:'no-store',headers:{Accept:'application/vnd.github.raw'}});if(r.ok)return r.arrayBuffer()}catch(e){}
+ return (await fetch('data.bin?'+Date.now(),{cache:'no-store'})).arrayBuffer()}
+async function unlock(pw){D=await dec(await fetchBin(),pw);PW=pw;
  $('#lock').hidden=true;$('#shell').hidden=false;render();await pull();track()}
 $('#unlock').onclick=async()=>{$('#err').innerHTML='<span class="spin"></span> entsperre …';try{await unlock($('#pw').value);if($('#keep').checked)ls.set('pw',$('#pw').value)}catch(e){$('#err').textContent='Falsches Passwort (oder offline)'}};
 $('#pw').onkeydown=e=>{if(e.key=='Enter')$('#unlock').click()};
