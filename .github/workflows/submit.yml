@@ -14,7 +14,7 @@ jobs:
         with: {python-version: "3.12"}
       - run: pip install -q playwright==1.48.0 cryptography && python -m playwright install --with-deps chromium
       - name: Abschicken
-        env: {SITE_PASSWORD: "${{ secrets.SITE_PASSWORD }}", ID: "${{ inputs.id }}"}
+        env: {RSA_KEY: "${{ secrets.RSA_KEY }}", ID: "${{ inputs.id }}"}
         run: cd tools && cp ../data.bin . && python cloud_submit.py "$ID"; cp data.bin ../data.bin
       - run: |
           git config user.name bewerbungs-bot && git config user.email bot@users.noreply.github.com

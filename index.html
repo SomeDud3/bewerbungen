@@ -58,7 +58,7 @@ details summary{cursor:pointer;font-weight:600;padding:2px 0}pre{white-space:pre
 <a href="#home" data-v="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Übersicht</a>
 <a href="#list" data-v="list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Stellen</a>
 <a href="#docs" data-v="docs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>Unterlagen</a>
-<a href="#log" data-v="log"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Verlauf</a>
+<a href="#log" data-v="log"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Mehr</a>
 </nav></div>
 <div id="modal" hidden><div class="mh"><b id="mt"></b><a class="btn" id="mdl" download>Speichern</a><button class="btn" onclick="closeModal()">✕</button></div><div class="mb" id="mb"></div></div>
 <script>
@@ -70,11 +70,28 @@ const fmt=d=>d.toLocaleDateString('de-AT',{day:'2-digit',month:'2-digit',year:'n
 const STAT={vorbereitet:'Bereit',beworben:'Beworben',nur_ein_monat:'Nur 1 Monat',absage:'Absage',zusage:'Zusage'};
 const DONE=['beworben','absage','zusage'];
 // ---------- Krypto (gleiches Format wie crypt.py) ----------
+const ub=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));let K,META; // K = Datenschluessel, META = Passwort-/RSA-Huelle
 async function key(pw,salt){const k=await crypto.subtle.importKey('raw',te.encode(pw),'PBKDF2',false,['deriveKey']);
  return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:600000,hash:'SHA-256'},k,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
-async function dec(buf,pw){const b=new Uint8Array(buf);return JSON.parse(td.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:b.slice(16,28)},await key(pw,b.slice(0,16)),b.slice(28))))}
-async function enc(o,pw){const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));
- const ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},await key(pw,salt),te.encode(JSON.stringify(o))));const out=new Uint8Array(28+ct.length);out.set(salt);out.set(iv,16);out.set(ct,28);return out}
+const aes=raw=>crypto.subtle.importKey('raw',raw,'AES-GCM',false,['encrypt','decrypt']);
+async function unwrap(j,pw){const w=j.pw;return new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:ub(w.iv)},await key(pw,ub(w.salt)),ub(w.ct)))}
+async function dec(buf,pw){const j=JSON.parse(td.decode(buf)),k=await unwrap(j,pw);
+ const d=JSON.parse(td.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:ub(j.iv)},await aes(k),ub(j.ct)))));K=k;META={pw:j.pw,rsa:j.rsa};return d}
+async function enc(o){const iv=crypto.getRandomValues(new Uint8Array(12));
+ const ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},await aes(K),te.encode(JSON.stringify(o))));
+ return te.encode(JSON.stringify({v:2,pw:META.pw,rsa:META.rsa,iv:b64(iv),ct:b64(ct)}))}
+async function changePw(){const o=$('#pwOld').value,n=$('#pwNew').value,n2=$('#pwNew2').value,m=$('#pwMsg');
+ if(n.length<12)return m.textContent='Neues Passwort: mindestens 12 Zeichen';if(n!==n2)return m.textContent='Die zwei neuen Passwörter sind verschieden';
+ m.innerHTML='<span class="spin"></span> prüfe …';try{await unwrap({pw:META.pw},o)}catch(e){return m.textContent='Aktuelles Passwort falsch'}
+ m.innerHTML='<span class="spin"></span> verschlüssele neu …';await pull();
+ const oldK=K,oldMeta=META;const nk=crypto.getRandomValues(new Uint8Array(32)),salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));
+ const wrap=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},await key(n,salt),nk));
+ const pub=await crypto.subtle.importKey('spki',ub(D.pub),{name:'RSA-OAEP',hash:'SHA-256'},false,['encrypt']);
+ const rsa=new Uint8Array(await crypto.subtle.encrypt({name:'RSA-OAEP'},pub,nk));
+ K=nk;META={pw:{salt:b64(salt),iv:b64(iv),ct:b64(wrap)},rsa:b64(rsa)};
+ const r=await gh('/contents/data.bin',{method:'PUT',body:JSON.stringify({message:'passwort geändert',content:b64(await enc(D)),sha:SHA})});
+ if(!r.ok){K=oldK;META=oldMeta;return m.textContent='Fehlgeschlagen ('+r.status+'), Passwort NICHT geändert'}
+ SHA=(await r.json()).content.sha;PW=n;if(ls.get('pw'))ls.set('pw',n);['#pwOld','#pwNew','#pwNew2'].forEach(s=>$(s).value='');m.textContent='✅ Passwort geändert. Das alte gilt nicht mehr.';toast('Passwort geändert')}
 const b64=u=>{let s='';for(let i=0;i<u.length;i+=32768)s+=String.fromCharCode(...u.subarray(i,i+32768));return btoa(s)};
 const bytes=n=>{const b=atob(D.files[n]),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u};
 // ---------- GitHub ----------
@@ -82,7 +99,7 @@ const gh=(p,o={})=>fetch('https://api.github.com/repos/'+D.repo+p,{...o,cache:'n
 async function pull(){try{$('#sync').innerHTML='<span class="spin"></span>';const j=await (await gh('/contents/data.bin')).json();
  if(j.sha&&j.sha!=SHA){const r=await gh('/contents/data.bin',{headers:{Accept:'application/vnd.github.raw'}});D=await dec(await r.arrayBuffer(),PW);SHA=j.sha;render()}
  $('#sync').textContent='✓ aktuell'}catch(e){$('#sync').textContent='offline'}}
-async function save(msg){$('#sync').innerHTML='<span class="spin"></span>';const r=await gh('/contents/data.bin',{method:'PUT',body:JSON.stringify({message:msg,content:b64(await enc(D,PW)),sha:SHA})});
+async function save(msg){$('#sync').innerHTML='<span class="spin"></span>';const r=await gh('/contents/data.bin',{method:'PUT',body:JSON.stringify({message:msg,content:b64(await enc(D)),sha:SHA})});
  if(!r.ok){toast('Speichern fehlgeschlagen ('+r.status+'), lade neu');SHA=null;return pull()}SHA=(await r.json()).content.sha;$('#sync').textContent='✓ gespeichert';render()}
 // ---------- Logik ----------
 const S=id=>D.stellen.find(s=>s.id==id);
@@ -121,6 +138,9 @@ docs(){const f=Object.keys(D.files).filter(n=>/\.(pdf|png)$/.test(n)).sort();
 log(){const r=D.laeufe||[];const ev=D.stellen.filter(s=>s.bewerben).map(s=>({d:s.bewerben.slice(0,10),t:s.firma,x:s.bewerben.slice(11)})).sort((a,b)=>b.d.localeCompare(a.d));
  return `${RUN?runCard():''}<div class="sec">Bewerbungen</div><div class="list">${ev.map(e=>`<div class="row" style="cursor:default"><div class="dot pill s-beworben">✓</div><div class="t"><b>${esc(e.t)}</b><span class="mut sm">${esc(fmt(new Date(e.d)))} · ${esc(e.x)}</span></div></div>`).join('')||'<div class="row mut">noch keine</div>'}</div>
  <div class="sec">Abschick-Läufe</div>${r.length?r.map(x=>`<div class="card"><details><summary>${x.ok?'✅':'⚠️'} ${esc(S(x.id)?.firma||x.id)} <span class="mut sm">· ${esc(x.zeit)}</span></summary><pre>${esc(x.log)}</pre></details></div>`).join(''):'<div class="card mut sm">noch keine</div>'}
+ <div class="sec">Passwort ändern</div><div class="card" style="margin-top:0;display:grid;gap:8px">
+ <input type="password" id="pwOld" placeholder="Aktuelles Passwort" autocomplete="current-password"><input type="password" id="pwNew" placeholder="Neues Passwort (min. 12 Zeichen)" autocomplete="new-password">
+ <input type="password" id="pwNew2" placeholder="Neues Passwort wiederholen" autocomplete="new-password"><button class="btn go" onclick="changePw()">Passwort ändern</button><div id="pwMsg" class="mut sm"></div></div>
  <div class="btns" style="margin-top:16px"><button class="btn" onclick="pull()">Neu laden</button><button class="btn" onclick="logout()">Abmelden</button></div>`},
 s(id){const s=S(id);if(!s)return '<div class="card">Nicht gefunden</div>';const w=s.weg||{},b=s.brief,done=DONE.includes(s.status);
  const steps=[[!!s.pdf,'Anschreiben erstellt'],[true,'Lebenslauf aktuell'],[DONE.includes(s.status),'Bewerbung abgeschickt'],[['absage','zusage'].includes(s.status),'Antwort erhalten']];
@@ -174,7 +194,7 @@ function closeModal(){if(!$('#modal').hidden){$('#modal').hidden=true;$('#mb').i
 // ---------- Routing ----------
 function go(r){location.hash=r}
 function render(){if(!D)return;const h=(location.hash.slice(1)||'home'),[v,arg]=h.split('/');const fn=V[v]||V.home;
- $('#view').innerHTML=fn(arg);$('#title').textContent=v=='s'?'Stelle':{home:'Übersicht',list:'Stellen',docs:'Unterlagen',log:'Verlauf'}[v]||'Übersicht';
+ $('#view').innerHTML=fn(arg);$('#title').textContent=v=='s'?'Stelle':{home:'Übersicht',list:'Stellen',docs:'Unterlagen',log:'Verlauf & Einstellungen'}[v]||'Übersicht';
  $('#back').hidden=v!='s';document.querySelectorAll('nav.tabs a').forEach(a=>a.classList.toggle('on',a.dataset.v==(v=='s'?'list':v)))}
 let lastHash=location.hash;addEventListener('hashchange',()=>{const sameView=location.hash.split('/')[0]==lastHash.split('/')[0]&&!location.hash.includes('/');lastHash=location.hash;render();if(!sameView)scrollTo(0,0)});
 addEventListener('popstate',()=>closeModal());

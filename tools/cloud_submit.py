@@ -4,8 +4,7 @@ import base64, datetime, json, os, pathlib, subprocess, sys
 import crypt
 
 i = sys.argv[1]
-pw = os.environ["SITE_PASSWORD"]
-d = crypt.open_(pathlib.Path("data.bin").read_bytes(), pw)
+d, K, meta = crypt.open_(pathlib.Path("data.bin").read_bytes(), priv=crypt.private_key())
 s = next(x for x in d["stellen"] if x["id"] == i)
 auto = s["weg"].get("auto")
 w = pathlib.Path("work")
@@ -33,6 +32,6 @@ if ok:
     s["bewerben"] = f"{now[:10]} per Formular (Handy/GitHub), Bestätigungsseite erkannt"
 d.setdefault("laeufe", []).insert(0, {"id": i, "zeit": now, "ok": ok, "log": log})
 d["laeufe"] = d["laeufe"][:10]
-pathlib.Path("data.bin").write_bytes(crypt.seal(d, pw))
+pathlib.Path("data.bin").write_bytes(crypt.seal(d, K, meta))
 # Log nur verschluesselt speichern: Actions-Logs sind oeffentlich
 print("OK" if ok else "NICHT ABGESCHICKT")
