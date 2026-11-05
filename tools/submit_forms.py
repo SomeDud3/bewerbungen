@@ -101,7 +101,7 @@ def web(c):
 
 
 with sync_playwright() as p:
-    br = p.chromium.launch(headless=True) if CLOUD else p.chromium.launch(executable_path=B, headless=False, args=["--start-maximized"])
+    br = p.chromium.launch(channel="chrome", headless=True) if CLOUD else p.chromium.launch(executable_path=B, headless=False, args=["--start-maximized"])
     c = br.new_context(viewport={"width": 1280, "height": 900}, locale="de-AT") if CLOUD else br.new_context(no_viewport=True)
     done = {}
     for name, fn in (("docolution", docolution), ("web", web)):

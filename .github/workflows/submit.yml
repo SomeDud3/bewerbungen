@@ -8,11 +8,12 @@ permissions: {contents: write}
 jobs:
   submit:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: "3.12"}
-      - run: pip install -q playwright==1.48.0 cryptography && python -m playwright install --with-deps chromium
+      - run: pip install -q playwright==1.48.0 cryptography
       - name: Abschicken
         env: {RSA_KEY: "${{ secrets.RSA_KEY }}", ID: "${{ inputs.id }}"}
         run: cd tools && cp ../data.bin . && python cloud_submit.py "$ID"; cp data.bin ../data.bin
