@@ -1,0 +1,21 @@
+name: submit
+on:
+  workflow_dispatch:
+    inputs:
+      id: {description: "Stellen-ID", required: true}
+concurrency: {group: submit}
+permissions: {contents: write}
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: pip install -q playwright==1.48.0 cryptography && python -m playwright install --with-deps chromium
+      - name: Abschicken
+        env: {SITE_PASSWORD: "${{ secrets.SITE_PASSWORD }}", ID: "${{ inputs.id }}"}
+        run: cd tools && cp ../data.bin . && python cloud_submit.py "$ID"; cp data.bin ../data.bin
+      - run: |
+          git config user.name bewerbungs-bot && git config user.email bot@users.noreply.github.com
+          git add data.bin && git commit -m "submit ${{ inputs.id }}" && git pull --rebase && git push

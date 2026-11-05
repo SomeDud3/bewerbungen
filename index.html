@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex"><title>Bewerbungen</title>
+<style>
+:root{--bg:#f6f6f3;--card:#fff;--fg:#1b1b1b;--mut:#666;--line:#e2e2dc;--acc:#1f5fd1;--ok:#1d7a3e;--warn:#a35c00;--bad:#b3261e}
+@media (prefers-color-scheme:dark){:root{--bg:#121212;--card:#1d1d1d;--fg:#eee;--mut:#9a9a9a;--line:#333;--acc:#6d9cff;--ok:#5cc47f;--warn:#e0a24a;--bad:#ff7b72}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 system-ui,Segoe UI,sans-serif}
+main{max-width:760px;margin:0 auto;padding:20px 16px 60px}h1{font-size:20px;margin:0 0 4px}.mut{color:var(--mut)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:12px 0}
+.top{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.top h2{font-size:16px;margin:0;flex:1 1 100%}
+.pill{font-size:12px;padding:2px 9px;border-radius:99px;border:1px solid var(--line)}
+.beworben,.zusage{color:var(--ok);border-color:var(--ok)}.vorbereitet{color:var(--acc);border-color:var(--acc)}.nur_ein_monat{color:var(--warn);border-color:var(--warn)}.absage{color:var(--bad);border-color:var(--bad)}
+table{border-collapse:collapse;margin:8px 0;font-size:13.5px;width:100%}td{padding:2px 10px 2px 0;vertical-align:top;overflow-wrap:anywhere}td:first-child{color:var(--mut);white-space:nowrap}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+button,a.b{font:inherit;font-size:14px;padding:9px 13px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer;text-decoration:none}
+button.go{background:var(--acc);border-color:var(--acc);color:#fff}button:disabled{opacity:.5}
+input{width:100%;font:inherit;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);margin:8px 0}
+.note{font-size:13px;color:var(--warn);margin:6px 0}pre{white-space:pre-wrap;font-size:12px;background:var(--bg);padding:10px;border-radius:6px;max-height:240px;overflow:auto}
+#lock{max-width:360px;margin:18vh auto 0}a{color:var(--acc)}
+</style></head><body><main>
+<div id="lock" class="card"><h1>Bewerbungen</h1><div class="mut">Passwort zum Entsperren</div>
+<input type="password" id="pw" autocomplete="current-password"><label class="mut"><input type="checkbox" id="keep" style="width:auto"> angemeldet bleiben</label>
+<div class="btns"><button class="go" id="unlock">Entsperren</button></div><div id="err" class="note"></div></div>
+<div id="app" hidden><h1>Bewerbungen · Praktikum 2027</h1><div class="mut" id="sub"></div><div id="list"></div><div id="runs"></div>
+<div class="btns"><button onclick="refresh()">Neu laden</button><button onclick="logout()">Abmelden</button></div></div>
+</main>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const te=new TextEncoder(),td=new TextDecoder();let PW,D,SHA,poll;
+const ls={get:k=>{try{return localStorage.getItem(k)}catch(e){}},set:(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}}};
+async function key(pw,salt){const k=await crypto.subtle.importKey('raw',te.encode(pw),'PBKDF2',false,['deriveKey']);
+ return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:600000,hash:'SHA-256'},k,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
+async function dec(buf,pw){const b=new Uint8Array(buf);return JSON.parse(td.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:b.slice(16,28)},await key(pw,b.slice(0,16)),b.slice(28))))}
+async function enc(obj,pw){const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));
+ const ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},await key(pw,salt),te.encode(JSON.stringify(obj))));
+ const out=new Uint8Array(28+ct.length);out.set(salt);out.set(iv,16);out.set(ct,28);return out}
+const b64=u=>{let s='';for(let i=0;i<u.length;i+=32768)s+=String.fromCharCode(...u.subarray(i,i+32768));return btoa(s)};
+const gh=(p,o={})=>fetch('https://api.github.com/repos/'+D.repo+p,{...o,headers:{Authorization:'Bearer '+D.token,Accept:'application/vnd.github+json',...(o.headers||{})}});
+async function unlock(pw){
+ const r=await fetch('data.bin?'+Date.now());D=await dec(await r.arrayBuffer(),pw);PW=pw;
+ $('#lock').hidden=true;$('#app').hidden=false;render();refresh();
+}
+$('#unlock').onclick=async()=>{$('#err').textContent='entsperre …';try{await unlock($('#pw').value);if($('#keep').checked)ls.set('pw',$('#pw').value)}catch(e){$('#err').textContent='Falsches Passwort'}};
+$('#pw').onkeydown=e=>{if(e.key=='Enter')$('#unlock').click()};
+function logout(){ls.set('pw',null);location.reload()}
+async function refresh(){ // frische Daten direkt aus dem Repo (Pages cached ein paar Minuten)
+ try{const r=await gh('/contents/data.bin');const j=await r.json();SHA=j.sha;
+  const raw=await gh('/contents/data.bin',{headers:{Accept:'application/vnd.github.raw'}});D=await dec(await raw.arrayBuffer(),PW);render()}catch(e){console.warn(e)}
+ checkRuns();
+}
+async function save(msg){const body=await enc(D,PW);
+ const r=await gh('/contents/data.bin',{method:'PUT',body:JSON.stringify({message:msg,content:b64(body),sha:SHA})});
+ if(!r.ok){alert('Speichern fehlgeschlagen: '+r.status);return refresh()}SHA=(await r.json()).content.sha;render()}
+function fileUrl(n){const b=atob(D.files[n]),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);
+ return URL.createObjectURL(new Blob([u],{type:n.endsWith('.png')?'image/png':'application/pdf'}))}
+function openFile(n){window.open(fileUrl(n),'_blank')}
+function render(){
+ $('#sub').textContent='Juli + August 2027 · '+D.stellen.filter(s=>s.status=='beworben').length+' von '+D.stellen.length+' beworben';
+ $('#list').innerHTML=(D.offen&&D.offen.length?`<div class="card"><b>Fehlt noch von dir</b><ul>${D.offen.map(x=>`<li>${esc(typeof x=='string'?x:JSON.stringify(x))}</li>`).join('')}</ul></div>`:'')+
+  D.stellen.slice().sort((a,b)=>(a.status=='beworben')-(b.status=='beworben')||b.score-a.score).map(card).join('');
+ const r=D.laeufe||[];$('#runs').innerHTML=r.length?`<div class="card"><b>Letzte Abschick-Läufe</b>${r.slice(0,3).map(x=>`<details><summary>${esc(x.zeit)} · ${esc(x.id)} · ${x.ok?'✔ abgeschickt':'✖ nicht abgeschickt'}</summary><pre>${esc(x.log)}</pre></details>`).join('')}</div>`:'';
+}
+function card(s){
+ const w=s.weg,done=['beworben','absage','zusage'].includes(s.status);let act='';
+ if(w.art=='formular'&&w.auto)act=`<button class="go" ${done?'disabled':''} onclick="submitJob('${s.id}',this)">Abschicken</button>`;
+ if(w.art=='portal')act=`<a class="b" target="_blank" rel="noopener" href="${esc(w.url)}">Zur Bewerbung</a>`;
+ if(w.art=='mail'&&s.brief){const b=s.brief,body=[b.anrede,...b.absaetze,'Mit freundlichen Grüßen',D.name].join('\n\n');
+  act=`<a class="b" href="mailto:${w.an}?subject=${encodeURIComponent(b.betreff)}&body=${encodeURIComponent(body)}">Mail öffnen (PDFs anhängen)</a>`}
+ const f=w.felder?`<details><summary>Was gesendet wird</summary><table>${Object.entries(w.felder).map(([k,v])=>`<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join('')}</table></details>`:'';
+ const br=s.brief?`<details><summary>Anschreiben-Text</summary><p><b>${esc(s.brief.betreff)}</b></p><p>${esc(s.brief.anrede)}</p>${s.brief.absaetze.map(p=>`<p>${esc(p)}</p>`).join('')}</details>`:'';
+ return `<div class="card"><div class="top"><h2>${esc(s.firma)}</h2><span class="pill">Score ${s.score}</span><span class="pill ${s.status}">${esc(s.status)}</span></div>
+ <div class="mut" style="font-size:13px"><a href="${esc(s.url)}" target="_blank" rel="noopener">Inserat</a>${s.frist?' · Frist: '+esc(s.frist):''}${s.kontakt?' · '+esc(s.kontakt):''}</div>
+ ${s.bewerben?`<div style="margin-top:6px">✔ ${esc(s.bewerben)}</div>`:''}${w.hinweis?`<div class="note">${esc(w.hinweis)}</div>`:''}
+ ${s.unklar?`<details><summary class="mut">Unklar</summary><div class="mut" style="font-size:13px">${esc(s.unklar)}</div></details>`:''}${f}${br}
+ <div class="btns">${act}${s.pdf&&D.files[s.pdf]?`<button onclick="openFile('${s.pdf}')">Anschreiben</button>`:''}<button onclick="openFile('Lebenslauf_Sadaat.pdf')">Lebenslauf</button>
+ ${s.shot&&D.files[s.shot]?`<button onclick="openFile('${s.shot}')">Bestätigung</button>`:''}
+ <select onchange="mark('${s.id}',this.value)" style="font:inherit;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg)"><option value="">Status …</option>${['beworben','absage','zusage','vorbereitet'].map(x=>`<option>${x}</option>`).join('')}</select></div></div>`;
+}
+async function mark(id,st){if(!st||!confirm(`Status auf „${st}“?`))return render();const s=D.stellen.find(x=>x.id==id);s.status=st;
+ if(st=='beworben'&&!s.bewerben)s.bewerben=new Date().toISOString().slice(0,10)+' manuell markiert';await save('status '+id+' '+st)}
+async function submitJob(id,btn){const s=D.stellen.find(x=>x.id==id);
+ if(!confirm(`Bewerbung an ${s.firma} jetzt wirklich abschicken?`))return;btn.disabled=true;btn.textContent='startet …';
+ const r=await gh('/actions/workflows/submit.yml/dispatches',{method:'POST',body:JSON.stringify({ref:'main',inputs:{id}})});
+ if(!r.ok){alert('Start fehlgeschlagen: '+r.status);btn.disabled=false;btn.textContent='Abschicken';return}
+ btn.textContent='läuft (ca. 2–3 Min) …';setTimeout(checkRuns,8000)}
+async function checkRuns(){clearTimeout(poll);
+ try{const j=await (await gh('/actions/workflows/submit.yml/runs?per_page=1')).json();const run=j.workflow_runs&&j.workflow_runs[0];
+  if(run&&run.status!='completed'){$('#sub').textContent='⏳ Abschicken läuft …';poll=setTimeout(checkRuns,10000)}
+  else if(run&&ls.get('lastRun')!=String(run.id)){ls.set('lastRun',run.id);const r=await gh('/contents/data.bin');const j2=await r.json();
+   if(j2.sha!=SHA){SHA=j2.sha;D=await dec(await (await gh('/contents/data.bin',{headers:{Accept:'application/vnd.github.raw'}})).arrayBuffer(),PW);render()}}}catch(e){}}
+const saved=ls.get('pw');if(saved)unlock(saved).catch(()=>ls.set('pw',null));
+</script></body></html>
