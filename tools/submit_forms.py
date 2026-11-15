@@ -1,6 +1,6 @@
 """Fuellt die Formulare und sendet sie EINMAL ab. Nur starten, wenn der User das ausdruecklich sagt.
 Aufruf: submit_forms.py <playwright-dir> <screenshot-dir> [docolution] [web]
-Leer gelassen: Anrede, Staatsbuergerschaft/Arbeitserlaubnis, Marketing-Einwilligung, Honeypot 'website'.
+Anrede/Arbeitserlaubnis nur aus formdata.json (vom User bestaetigt). Leer gelassen: Marketing-Einwilligung, Honeypot 'website'.
 Bei Captcha oder Fehler bleibt das Fenster offen, es wird nichts umgangen."""
 import json, os, pathlib, re, sys, time
 sys.path.insert(0, sys.argv[1])
@@ -73,6 +73,14 @@ def web(c):
     for k, v in dict(vorname=F["vorname"], nachname=F["nachname"], telefon=F["telefon"], mail=MAIL, geburtsdatum=F["geburtsdatum"],
                      ort=F["ort"], plz=F["plz"], eintrittsdatum=F["eintritt"]).items():
         g.fill(f'input[name="{N}[{k}]"]', v)
+    for k in ("anrede", "nation"):  # nur wenn der User es in formdata.json bestaetigt hat
+        if F.get(k):
+            sel = g.locator(f'select[name="{N}[{"gender" if k == "anrede" else k}]"]')
+            ok = sel.evaluate("(e,t)=>{const o=[...e.options].find(o=>o.text.trim()==t);if(!o)return false;e.value=o.value;"
+                              "e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));return true}", F[k])
+            log("web", k, ok)
+            if not ok:
+                raise RuntimeError(k + " Option fehlt")
     g.set_input_files('input[name="anschreiben"]', str(P / F["anschreiben_web"]))
     g.set_input_files('input[name="lebenslauf"]', CV)
     g.wait_for_timeout(2000)
@@ -89,12 +97,17 @@ def web(c):
     if not cb.is_checked():
         raise RuntimeError("Einwilligung liess sich nicht setzen")
     log("web captcha-frame:", captcha(g))
+    try:
+        g.get_by_text("Senden", exact=True).first.wait_for(state="visible", timeout=20000)
+    except Exception:
+        g.screenshot(path=str(OUT / "web_vor_senden.png"), full_page=True)
     form = g.locator('form:has(input[name="bewerbung_form[vorname]"])')
     b = form.locator('button, input[type=submit], a')  # diamir: Absenden ist ein <a>Senden</a>
     names = [((b.nth(i).inner_text() or b.nth(i).get_attribute("value") or "").strip()[:30], b.nth(i).is_visible()) for i in range(b.count())]
     log("web buttons:", names)
     hits = [i for i, (n, v) in enumerate(names) if v and re.fullmatch(r"(?i)(bewerbung )?(ab)?senden|submit", n)]
     if len(hits) != 1:
+        g.screenshot(path=str(OUT / "web_fehler.png"), full_page=True)
         raise RuntimeError("Absende-Button nicht eindeutig: " + str(names))
     b.nth(hits[0]).click()
     return result(g, "web_und_soehne")
