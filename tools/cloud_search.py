@@ -205,7 +205,7 @@ def bewerten(x):
     if geld and max(geld) >= 1000: sc += 1; why.append(f"ab {max(geld)} €")
     if EIN_MONAT.search(tt) and not re.search(r"(?i)2 monate|zwei monate|juli und august", tt):
         sc -= 2; why.append("evtl. nur 1 Monat")
-    return {**{k: x[k] for k in ("titel", "firma", "ort")}, "score": max(sc, 0), "gruende": why, "auszug": t[:700]}, None
+    return {**{k: x[k] for k in ("titel", "firma", "ort")}, "score": max(sc, 0), "gruende": why, "auszug": t[:700], "volltext": t[:6000]}, None
 
 
 def key(titel, firma):

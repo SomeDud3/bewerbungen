@@ -132,7 +132,10 @@ home(){const n=D.stellen.length,c=k=>D.stellen.filter(s=>k.includes(s.status)).l
  <div class="sec">Als Nächstes</div><div class="list">${t.length?t.slice(0,6).map(x=>`<div class="row" ${x.id?`onclick="go('s/${x.id}')"`:''}><div class="dot" style="background:var(--card2)">${x.ic}</div><div class="t"><b>${esc(x.txt)}</b><span class="mut sm">${esc(x.sub)}</span></div>${x.id?'<span class="chev">›</span>':''}</div>`).join(''):'<div class="row mut">Nichts offen 👌</div>'}</div>
  <div class="sec">Hinweis</div><div class="card sm mut" style="margin-top:0">Juli <b>und</b> August nötig. 1-Monats-Stellen zählen nur, wenn zwei zusammen beide Monate abdecken.</div>`},
 list(){const g=[['Offen',s=>!DONE.includes(s.status)],['Beworben',s=>s.status=='beworben'],['Abgeschlossen',s=>['absage','zusage'].includes(s.status)]];
- return g.map(([h,f])=>{const l=D.stellen.filter(f).sort((a,b)=>b.score-a.score);return l.length?`<div class="sec">${h} · ${l.length}</div><div class="list">${l.map(s=>row(s)).join('')}</div>`:''}).join('')},
+ const F=D.funde||[],nf=F.filter(x=>x.status=='neu'||x.status=='merken');
+ return (nf.length?`<div class="sec">Neu gefunden · ${nf.length}</div><div class="list">${nf.map(x=>`<div class="row" onclick="go('f/${F.indexOf(x)}')"><div class="dot" style="background:var(--card2)">${x.status=='merken'?'⭐':'🆕'}</div><div class="t"><b>${esc(x.firma)}</b><span class="mut sm">${esc(x.titel)} · Score ~${x.score}</span></div><span class="chev">›</span></div>`).join('')}</div>`:'')
+ +g.map(([h,f])=>{const l=D.stellen.filter(f).sort((a,b)=>b.score-a.score);return l.length?`<div class="sec">${h} · ${l.length}</div><div class="list">${l.map(s=>row(s)).join('')}</div>`:''}).join('')},
+f(i){const x=(D.funde||[])[i];return x?fundItem(x,+i)+`<div class="card sm mut">Gefunden ${esc(x.gefunden||'')} über ${esc(x.quelle||'Suche')}. Grober Score aus Regeln; „Merken“ = Claude prüft es am PC und baut das Paket.</div>`:'<div class="card">Nicht gefunden</div>'},
 docs(){const f=Object.keys(D.files).filter(n=>/\.(pdf|png)$/.test(n)).sort();
  return `<div class="sec">Deine Unterlagen</div><div class="list">${f.map(n=>`<div class="row" onclick="view('${esc(n)}')"><div class="dot" style="background:var(--card2)">${n.endsWith('.png')?'🖼️':'📄'}</div><div class="t"><b>${esc(n.replace(/^screens\//,'Bestätigung: ').replace(/_/g,' ').replace(/\.(pdf|png)$/,''))}</b><span class="mut sm">${Math.round(D.files[n].length*.75/1024)} KB</span></div><span class="chev">›</span></div>`).join('')}</div>
  <div class="card sm mut">Anschreiben bearbeiten geht am PC (Bewerbungen.bat), weil die PDFs über Word gebaut werden. Danach <code>build_site.py</code>, dann ist es hier.</div>`},
@@ -184,10 +187,11 @@ function fundeCard(){const F=D.funde||[],f=F.filter(x=>x.status=='neu'||x.status
  return `<div class="sec">Neue Stellen</div><div class="card" style="margin-top:0">
  <button class="btn go full" onclick="searchJobs()" ${SRUN?'disabled':''}>${SRUN?'<span class="spin"></span> Suche läuft …':'🔎 Nach neuen Stellen suchen'}</button>
  ${SRUN?searchSteps():`<div class="mut sm" style="margin-top:6px">${su?'Zuletzt '+esc(su.zeit)+' · '+su.inserate+' Inserate geprüft, '+su.neu+' neu':'Noch nie gesucht'} · 10 Quellen: karriere.at, jobs.at, AMS, willhaben, devjobs, Wiener Stadtwerke, ÖBB, Siemens, Bosch, Flughafen</div>`}</div>
- ${f.map(x=>{const i=F.indexOf(x);return `<div class="card" style="margin-top:8px"><b>${esc(x.firma)}</b> <span class="pill">Score ~${x.score}</span>${x.status=='merken'?' <span class="pill s-vorbereitet">gemerkt</span>':''}
+ ${f.map(x=>fundItem(x,F.indexOf(x))).join('')}`}
+function fundItem(x,i){return `<div class="card" style="margin-top:8px"><b>${esc(x.firma)}</b> <span class="pill">Score ~${x.score}</span>${x.status=='merken'?' <span class="pill s-vorbereitet">gemerkt</span>':''}
  <div class="sm">${esc(x.titel)}${x.ort?' · '+esc(x.ort):''}</div><div class="mut sm">${esc((x.gruende||[]).join(' · '))}</div>
  <details class="sm"><summary>Auszug</summary>${esc(x.auszug||'')}</details>
- <div class="grid2" style="margin-top:8px"><a class="btn" href="${esc(x.url)}" target="_blank" rel="noopener">🔗 Inserat</a>${x.status=='neu'?`<button class="btn" onclick="fund(${i},'merken')">⭐ Merken</button>`:''}<button class="btn" onclick="fund(${i},'verworfen')">✕ Verwerfen</button></div></div>`}).join('')}`}
+ <div class="grid2" style="margin-top:8px"><a class="btn" href="${esc(x.url)}" target="_blank" rel="noopener">🔗 Inserat</a>${x.status=='neu'?`<button class="btn" onclick="fund(${i},'merken')">⭐ Merken</button>`:''}<button class="btn" onclick="fund(${i},'verworfen')">✕ Verwerfen</button></div></div>`}
 async function searchJobs(){const t0=Date.now();const r=await gh('/actions/workflows/search.yml/dispatches',{method:'POST',body:JSON.stringify({ref:'main'})});
  if(!r.ok)return toast('Start fehlgeschlagen ('+r.status+')');SRUN={since:t0};render();toast('Suche gestartet, dauert ca. 2–4 Minuten');setTimeout(trackSearch,8000)}
 const dur=(a,b)=>{const s=Math.max(0,Math.round(((b?new Date(b):new Date())-new Date(a))/1000));return s<60?s+' s':Math.floor(s/60)+' min '+(s%60)+' s'};
@@ -223,8 +227,8 @@ function closeModal(){if(!$('#modal').hidden){$('#modal').hidden=true;$('#mb').i
 // ---------- Routing ----------
 function go(r){location.hash=r}
 function render(){if(!D)return;const h=(location.hash.slice(1)||'home'),[v,arg]=h.split('/');const fn=V[v]||V.home;
- $('#view').innerHTML=fn(arg);$('#title').textContent=v=='s'?'Stelle':{home:'Übersicht',list:'Stellen',docs:'Unterlagen',log:'Verlauf & Einstellungen'}[v]||'Übersicht';
- $('#back').hidden=v!='s';document.querySelectorAll('nav.tabs a').forEach(a=>a.classList.toggle('on',a.dataset.v==(v=='s'?'list':v)))}
+ $('#view').innerHTML=fn(arg);$('#title').textContent=v=='s'||v=='f'?'Stelle':{home:'Übersicht',list:'Stellen',docs:'Unterlagen',log:'Verlauf & Einstellungen'}[v]||'Übersicht';
+ $('#back').hidden=v!='s'&&v!='f';document.querySelectorAll('nav.tabs a').forEach(a=>a.classList.toggle('on',a.dataset.v==(v=='s'||v=='f'?'list':v)))}
 let lastHash=location.hash;addEventListener('hashchange',()=>{const sameView=location.hash.split('/')[0]==lastHash.split('/')[0]&&!location.hash.includes('/');lastHash=location.hash;render();if(!sameView)scrollTo(0,0)});
 addEventListener('popstate',()=>closeModal());
 // ---------- Start ----------
