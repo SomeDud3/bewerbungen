@@ -96,15 +96,18 @@ def ids(url, pat):
     return list(dict.fromkeys(re.findall(pat, get(url))))
 
 
-def suche(bekannt, alt=()):
+def liste_karriere():
+    return [("k", i) for q in KQ for p in (1, 2, 3)
+            for i in ids(f"https://www.karriere.at/jobs/{q}/wien?page={p}", r'href="https://www\.karriere\.at/jobs/(\d+)"')]
+
+
+def liste_jobsat():
+    return [("j", i) for q in JQ for i in ids(f"https://www.jobs.at/j/{q}/wien", r"jobs\.at/i/(\d+)")]
+
+
+def suche(bekannt, alt=(), kand=None):
     seen = [key(s.get("titel", ""), s.get("firma", "")) for s in alt]
-    kand = []
-    for q in KQ:
-        for p in (1, 2, 3):
-            kand += [("k", i) for i in ids(f"https://www.karriere.at/jobs/{q}/wien?page={p}", r'href="https://www\.karriere\.at/jobs/(\d+)"')]
-    for q in JQ:
-        kand += [("j", i) for i in ids(f"https://www.jobs.at/j/{q}/wien", r"jobs\.at/i/(\d+)")]
-    kand = list(dict.fromkeys(kand))
+    kand = list(dict.fromkeys(tuple(x) for x in (kand if kand is not None else liste_karriere() + liste_jobsat())))
     funde, neu_bekannt = [], []
     for src, i in kand:
         url = f"https://www.karriere.at/jobs/{i}" if src == "k" else f"https://www.jobs.at/i/{i}"
@@ -137,9 +140,19 @@ if __name__ == "__main__":
         f, b, n = suche({s["url"] for s in tr["stellen"]}, tr["stellen"])
         print(n, "Inserate,", len(f), "Treffer"); [print(x["score"], x["firma"], "|", x["titel"], "|", x["gruende"]) for x in f]
         sys.exit(0)
+    # Phasen = eigene Workflow-Schritte, damit die Handy-Seite den Fortschritt live zeigt
+    phase = sys.argv[1] if len(sys.argv) > 1 else "alles"
+    if phase in ("karriere", "jobsat"):
+        k = liste_karriere() if phase == "karriere" else liste_jobsat()
+        pathlib.Path(f"kand_{phase}.json").write_text(json.dumps(k))
+        print(len(k), "Links"); sys.exit(0)
+    kand = None
+    if phase == "pruefen":
+        kand = [x for n in ("karriere", "jobsat") if pathlib.Path(f"kand_{n}.json").exists()
+                for x in json.loads(pathlib.Path(f"kand_{n}.json").read_text())]
     import crypt
     d, K, meta = crypt.open_(pathlib.Path("data.bin").read_bytes(), priv=crypt.private_key())
-    f, b, n = suche(bekannte_urls(d), d.get("stellen", []) + d.get("funde", []))
+    f, b, n = suche(bekannte_urls(d), d.get("stellen", []) + d.get("funde", []), kand)
     for x in f:
         x.update(gefunden=now[:10], status="neu")
     d["funde"] = sorted(f, key=lambda x: -x["score"]) + d.get("funde", [])

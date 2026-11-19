@@ -183,17 +183,27 @@ let SRUN=null;
 function fundeCard(){const F=D.funde||[],f=F.filter(x=>x.status=='neu'||x.status=='merken'),su=D.suche;
  return `<div class="sec">Neue Stellen</div><div class="card" style="margin-top:0">
  <button class="btn go full" onclick="searchJobs()" ${SRUN?'disabled':''}>${SRUN?'<span class="spin"></span> Suche läuft …':'🔎 Nach neuen Stellen suchen'}</button>
- <div class="mut sm" style="margin-top:6px">${su?'Zuletzt '+esc(su.zeit)+' · '+su.inserate+' Inserate geprüft, '+su.neu+' neu':'Noch nie gesucht'} · karriere.at + jobs.at</div></div>
+ ${SRUN?searchSteps():`<div class="mut sm" style="margin-top:6px">${su?'Zuletzt '+esc(su.zeit)+' · '+su.inserate+' Inserate geprüft, '+su.neu+' neu':'Noch nie gesucht'} · karriere.at + jobs.at</div>`}</div>
  ${f.map(x=>{const i=F.indexOf(x);return `<div class="card" style="margin-top:8px"><b>${esc(x.firma)}</b> <span class="pill">Score ~${x.score}</span>${x.status=='merken'?' <span class="pill s-vorbereitet">gemerkt</span>':''}
  <div class="sm">${esc(x.titel)}${x.ort?' · '+esc(x.ort):''}</div><div class="mut sm">${esc((x.gruende||[]).join(' · '))}</div>
  <details class="sm"><summary>Auszug</summary>${esc(x.auszug||'')}</details>
  <div class="grid2" style="margin-top:8px"><a class="btn" href="${esc(x.url)}" target="_blank" rel="noopener">🔗 Inserat</a>${x.status=='neu'?`<button class="btn" onclick="fund(${i},'merken')">⭐ Merken</button>`:''}<button class="btn" onclick="fund(${i},'verworfen')">✕ Verwerfen</button></div></div>`}).join('')}`}
 async function searchJobs(){const t0=Date.now();const r=await gh('/actions/workflows/search.yml/dispatches',{method:'POST',body:JSON.stringify({ref:'main'})});
  if(!r.ok)return toast('Start fehlgeschlagen ('+r.status+')');SRUN={since:t0};render();toast('Suche gestartet, dauert ca. 2–4 Minuten');setTimeout(trackSearch,8000)}
-async function trackSearch(){try{const run=(await (await gh('/actions/workflows/search.yml/runs?per_page=1')).json()).workflow_runs?.[0];
- if(run&&new Date(run.created_at)>=new Date(SRUN.since-60000)&&run.status=='completed'){SRUN=null;SHA=null;await pull();render();
-  return toast(run.conclusion=='success'?`Fertig: ${D.suche?.neu??0} neue Treffer`:'Suche fehlgeschlagen')}}catch(e){}
- setTimeout(trackSearch,8000)}
+const dur=(a,b)=>{const s=Math.max(0,Math.round(((b?new Date(b):new Date())-new Date(a))/1000));return s<60?s+' s':Math.floor(s/60)+' min '+(s%60)+' s'};
+function searchSteps(){const st=(SRUN.steps||[]).filter(x=>!/^(Set up|Post|Complete|Run actions)/.test(x.name)),
+ ic=x=>x.conclusion=='success'?'✅':x.conclusion=='skipped'?'⏭️':x.conclusion?'⚠️':x.status=='in_progress'?'<span class="spin"></span>':'⬜️';
+ return `<ul class="steps" style="margin-top:10px">${st.length?st.map(x=>`<li><span class="ic">${ic(x)}</span>${esc(x.name.replace(/^Run /,'').slice(0,40))}${x.started_at?` <span class="mut sm">· ${dur(x.started_at,x.completed_at)}</span>`:''}</li>`).join('')
+  :`<li class="mut">${SRUN.status=='queued'?'in der Warteschlange …':'wartet auf GitHub-Server …'}</li>`}</ul>
+ <div class="mut sm">läuft seit ${dur(SRUN.since)}</div>`}
+async function trackSearch(first){try{const run=(await (await gh('/actions/workflows/search.yml/runs?per_page=1')).json()).workflow_runs?.[0];
+ if(first){if(!run||run.status=='completed')return;SRUN={since:+new Date(run.created_at)}}
+ if(run&&new Date(run.created_at)>=new Date(SRUN.since-60000)){SRUN.status=run.status;
+  SRUN.steps=(await (await gh('/actions/runs/'+run.id+'/jobs')).json()).jobs?.[0]?.steps||[];
+  if(run.status=='completed'){SRUN=null;SHA=null;await pull();render();
+   return toast(run.conclusion=='success'?`Fertig: ${D.suche?.neu??0} neue Treffer`:'Suche fehlgeschlagen')}}
+ if((location.hash.slice(1)||'home').startsWith('home'))render()}catch(e){}
+ setTimeout(trackSearch,5000)}
 async function fund(i,st){if(SRUN)return toast('Warte, bis die Suche fertig ist');D.funde[i].status=st;await save('fund '+st);
  toast(st=='merken'?'Gemerkt, das Paket baut Claude am PC':'Verworfen')}
 async function mark(id,st){if(!confirm(`Status auf „${STAT[st]}“ setzen?`))return;const s=S(id);s.status=st;
@@ -222,7 +232,7 @@ async function fetchBin(){ // frisch direkt aus dem Repo (Pages haengt nach Aend
  try{const r=await fetch('https://api.github.com/repos/SomeDud3/bewerbungen/contents/data.bin',{cache:'no-store',headers:{Accept:'application/vnd.github.raw'}});if(r.ok)return r.arrayBuffer()}catch(e){}
  return (await fetch('data.bin?'+Date.now(),{cache:'no-store'})).arrayBuffer()}
 async function unlock(pw){D=await dec(await fetchBin(),pw);PW=pw;
- $('#lock').hidden=true;$('#shell').hidden=false;render();await pull();track()}
+ $('#lock').hidden=true;$('#shell').hidden=false;render();await pull();track();trackSearch(true)}
 $('#unlock').onclick=async()=>{$('#err').innerHTML='<span class="spin"></span> entsperre …';try{await unlock($('#pw').value);if($('#keep').checked)ls.set('pw',$('#pw').value)}catch(e){$('#err').textContent='Falsches Passwort (oder offline)'}};
 $('#pw').onkeydown=e=>{if(e.key=='Enter')$('#unlock').click()};
 function logout(){ls.set('pw',null);location.hash='';location.reload()}
