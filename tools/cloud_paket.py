@@ -105,17 +105,21 @@ def frage_cli(system, user):
     r = subprocess.run(["claude", "-p", "--output-format", "json", "--model", "opus", "--max-turns", "4",
                         "--disallowedTools", "Bash,Read,Write,Edit,Glob,Grep,WebFetch,WebSearch,Task,NotebookEdit,TodoWrite"],
                        input=prompt, capture_output=True, text=True, encoding="utf-8", timeout=600)
+    # Technische Fehler -> RuntimeError (Fund bleibt offen); nur echte Ablehnung -> None
     try:
         out = json.loads(r.stdout)
-        if out.get("is_error"):
-            print("Claude Code Fehler:", str(out.get("subtype"))[:60]); return None
-        t = out.get("result", "")
+    except Exception:
+        raise RuntimeError(f"keine JSON-Ausgabe, rc {r.returncode}")
+    if out.get("is_error"):
+        raise RuntimeError("Claude Code: " + str(out.get("subtype"))[:60])
+    t = out.get("result", "")
+    try:
         a = json.loads(t[t.find("{"):t.rfind("}") + 1])
     except Exception:
-        print("Antwort nicht lesbar, rc", r.returncode, r.stderr[-200:].replace("\n", " ")); return None
+        raise RuntimeError("Antwort ist kein JSON")
     fehlt = [k for k in SCHEMA["required"] if k not in a] + [k for k in ("an", "betreff", "anrede", "absaetze") if k not in a.get("brief", {})]
     if fehlt or not isinstance(a.get("score"), int):
-        print("Antwort unvollständig:", fehlt[:5]); return None
+        raise RuntimeError(f"Antwort unvollständig: {fehlt[:5]}")
     return a
 
 
@@ -143,8 +147,8 @@ def main():
     for f in offen[:MAX_PRO_LAUF]:
         try:
             a = frage(client, d, f)
-        except (anthropic.APIError, subprocess.TimeoutExpired) as e:
-            print("API-Fehler", type(e).__name__); continue
+        except (anthropic.APIError, subprocess.TimeoutExpired, RuntimeError) as e:
+            print("Fehler, Fund bleibt offen:", str(e)[:120]); continue
         if not a:
             f["status"] = "geprueft"; f["claude"] = "abgelehnt (refusal)"; continue
         f["score"], f["claude"] = a["score"], a["begruendung"]
