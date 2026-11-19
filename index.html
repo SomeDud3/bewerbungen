@@ -183,7 +183,7 @@ let SRUN=null;
 function fundeCard(){const F=D.funde||[],f=F.filter(x=>x.status=='neu'||x.status=='merken'),su=D.suche;
  return `<div class="sec">Neue Stellen</div><div class="card" style="margin-top:0">
  <button class="btn go full" onclick="searchJobs()" ${SRUN?'disabled':''}>${SRUN?'<span class="spin"></span> Suche läuft …':'🔎 Nach neuen Stellen suchen'}</button>
- ${SRUN?searchSteps():`<div class="mut sm" style="margin-top:6px">${su?'Zuletzt '+esc(su.zeit)+' · '+su.inserate+' Inserate geprüft, '+su.neu+' neu':'Noch nie gesucht'} · karriere.at + jobs.at</div>`}</div>
+ ${SRUN?searchSteps():`<div class="mut sm" style="margin-top:6px">${su?'Zuletzt '+esc(su.zeit)+' · '+su.inserate+' Inserate geprüft, '+su.neu+' neu':'Noch nie gesucht'} · 10 Quellen: karriere.at, jobs.at, AMS, willhaben, devjobs, Wiener Stadtwerke, ÖBB, Siemens, Bosch, Flughafen</div>`}</div>
  ${f.map(x=>{const i=F.indexOf(x);return `<div class="card" style="margin-top:8px"><b>${esc(x.firma)}</b> <span class="pill">Score ~${x.score}</span>${x.status=='merken'?' <span class="pill s-vorbereitet">gemerkt</span>':''}
  <div class="sm">${esc(x.titel)}${x.ort?' · '+esc(x.ort):''}</div><div class="mut sm">${esc((x.gruende||[]).join(' · '))}</div>
  <details class="sm"><summary>Auszug</summary>${esc(x.auszug||'')}</details>

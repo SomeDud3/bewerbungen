@@ -5,18 +5,22 @@ permissions: {contents: write}
 jobs:
   search:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     defaults: {run: {working-directory: tools}}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: "3.12"}
       - name: Vorbereiten
-        run: pip install -q cryptography && cp ../data.bin .
+        run: pip install -q cryptography playwright==1.48.0 && cp ../data.bin .
       - name: karriere.at durchsuchen
         run: python cloud_search.py karriere
       - name: jobs.at durchsuchen
         run: python cloud_search.py jobsat
+      - name: Firmenportale & devjobs/willhaben
+        run: python cloud_search.py portale
+      - name: Stadtwerke, ÖBB, AMS, Siemens Energy (Browser)
+        run: python cloud_search.py browser
       - name: Inserate prüfen
         env: {RSA_KEY: "${{ secrets.RSA_KEY }}"}
         run: python cloud_search.py pruefen && cp data.bin ../data.bin
