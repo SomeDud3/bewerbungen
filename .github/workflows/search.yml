@@ -1,0 +1,19 @@
+name: search
+on: workflow_dispatch
+concurrency: {group: submit}
+permissions: {contents: write}
+jobs:
+  search:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: pip install -q cryptography
+      - name: Neue Stellen suchen
+        env: {RSA_KEY: "${{ secrets.RSA_KEY }}"}
+        run: cd tools && cp ../data.bin . && python cloud_search.py; cp data.bin ../data.bin
+      - run: |
+          git config user.name bewerbungs-bot && git config user.email bot@users.noreply.github.com
+          git diff --quiet data.bin || git add data.bin && git commit -m "suche" && git pull --rebase && git push || true

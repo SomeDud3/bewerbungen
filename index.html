@@ -128,6 +128,7 @@ home(){const n=D.stellen.length,c=k=>D.stellen.filter(s=>k.includes(s.status)).l
  <div class="tiles"><div class="tile"><b>${c(['vorbereitet'])}</b><span>bereit</span></div><div class="tile"><b>${c(['beworben'])}</b><span>beworben</span></div><div class="tile"><b>${c(['zusage'])}</b><span>Zusagen</span></div>
  </div>
  ${RUN?runCard():''}
+ ${fundeCard()}
  <div class="sec">Als Nächstes</div><div class="list">${t.length?t.slice(0,6).map(x=>`<div class="row" ${x.id?`onclick="go('s/${x.id}')"`:''}><div class="dot" style="background:var(--card2)">${x.ic}</div><div class="t"><b>${esc(x.txt)}</b><span class="mut sm">${esc(x.sub)}</span></div>${x.id?'<span class="chev">›</span>':''}</div>`).join(''):'<div class="row mut">Nichts offen 👌</div>'}</div>
  <div class="sec">Hinweis</div><div class="card sm mut" style="margin-top:0">Juli <b>und</b> August nötig. 1-Monats-Stellen zählen nur, wenn zwei zusammen beide Monate abdecken.</div>`},
 list(){const g=[['Offen',s=>!DONE.includes(s.status)],['Beworben',s=>s.status=='beworben'],['Abgeschlossen',s=>['absage','zusage'].includes(s.status)]];
@@ -177,6 +178,24 @@ async function track(){clearTimeout(pollT);try{
  if(RUN&&(fresh||RUN.run==run.id)){RUN.run=run.id;const jobs=await (await gh('/actions/runs/'+run.id+'/jobs')).json();RUN.steps=jobs.jobs?.[0]?.steps||[];
   if(run.status=='completed'){RUN.done=true;SHA=null;await pull();const s=S(RUN.id);RUN.ok=s&&s.status=='beworben';toast(RUN.ok?'Abgeschickt ✅':'Nicht abgeschickt, siehe Verlauf');render();return}render()}
  if(RUN&&!RUN.done)pollT=setTimeout(track,6000)}catch(e){pollT=setTimeout(track,10000)}}
+// ---------- Stellensuche (Workflow search.yml) ----------
+let SRUN=null;
+function fundeCard(){const F=D.funde||[],f=F.filter(x=>x.status=='neu'||x.status=='merken'),su=D.suche;
+ return `<div class="sec">Neue Stellen</div><div class="card" style="margin-top:0">
+ <button class="btn go full" onclick="searchJobs()" ${SRUN?'disabled':''}>${SRUN?'<span class="spin"></span> Suche läuft …':'🔎 Nach neuen Stellen suchen'}</button>
+ <div class="mut sm" style="margin-top:6px">${su?'Zuletzt '+esc(su.zeit)+' · '+su.inserate+' Inserate geprüft, '+su.neu+' neu':'Noch nie gesucht'} · karriere.at + jobs.at</div></div>
+ ${f.map(x=>{const i=F.indexOf(x);return `<div class="card" style="margin-top:8px"><b>${esc(x.firma)}</b> <span class="pill">Score ~${x.score}</span>${x.status=='merken'?' <span class="pill s-vorbereitet">gemerkt</span>':''}
+ <div class="sm">${esc(x.titel)}${x.ort?' · '+esc(x.ort):''}</div><div class="mut sm">${esc((x.gruende||[]).join(' · '))}</div>
+ <details class="sm"><summary>Auszug</summary>${esc(x.auszug||'')}</details>
+ <div class="grid2" style="margin-top:8px"><a class="btn" href="${esc(x.url)}" target="_blank" rel="noopener">🔗 Inserat</a>${x.status=='neu'?`<button class="btn" onclick="fund(${i},'merken')">⭐ Merken</button>`:''}<button class="btn" onclick="fund(${i},'verworfen')">✕ Verwerfen</button></div></div>`}).join('')}`}
+async function searchJobs(){const t0=Date.now();const r=await gh('/actions/workflows/search.yml/dispatches',{method:'POST',body:JSON.stringify({ref:'main'})});
+ if(!r.ok)return toast('Start fehlgeschlagen ('+r.status+')');SRUN={since:t0};render();toast('Suche gestartet, dauert ca. 2–4 Minuten');setTimeout(trackSearch,8000)}
+async function trackSearch(){try{const run=(await (await gh('/actions/workflows/search.yml/runs?per_page=1')).json()).workflow_runs?.[0];
+ if(run&&new Date(run.created_at)>=new Date(SRUN.since-60000)&&run.status=='completed'){SRUN=null;SHA=null;await pull();render();
+  return toast(run.conclusion=='success'?`Fertig: ${D.suche?.neu??0} neue Treffer`:'Suche fehlgeschlagen')}}catch(e){}
+ setTimeout(trackSearch,8000)}
+async function fund(i,st){if(SRUN)return toast('Warte, bis die Suche fertig ist');D.funde[i].status=st;await save('fund '+st);
+ toast(st=='merken'?'Gemerkt, das Paket baut Claude am PC':'Verworfen')}
 async function mark(id,st){if(!confirm(`Status auf „${STAT[st]}“ setzen?`))return;const s=S(id);s.status=st;
  if(st=='beworben'&&!s.bewerben)s.bewerben=new Date().toISOString().slice(0,10)+' manuell markiert';await save('status '+id+' '+st);toast('Gespeichert')}
 async function saveNote(id){S(id).notiz=$('#note').value;await save('notiz '+id);toast('Notiz gespeichert')}
