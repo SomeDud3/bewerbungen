@@ -1,7 +1,7 @@
 """GitHub Actions: neue Funde mit Claude pruefen, bei Score >= 6 Bewerbungspaket bauen (Anschreiben + PDF ueber Chrome).
 Regeln, Profil, Lebenslauf-Text und Beispielbriefe kommen aus dem Bundle (build_site.py), damit SKILL.md die einzige Quelle bleibt.
 cloud_paket.py            (braucht ANTHROPIC_API_KEY + RSA_KEY)"""
-import base64, datetime, html, json, os, pathlib, re, sys
+import base64, datetime, html, json, os, pathlib, re, subprocess, sys
 import anthropic
 import crypt
 
@@ -86,6 +86,8 @@ Titel: {f['titel']}
 Firma: {f['firma']}
 Ort: {f.get('ort', '')}
 {f.get('volltext') or f.get('auszug', '')}"""
+    if client is None:  # Abo: Claude Code CLI mit CLAUDE_CODE_OAUTH_TOKEN
+        return frage_cli(system, user)
     r = client.beta.messages.create(
         model=MODEL, max_tokens=16000,
         betas=["server-side-fallback-2026-07-01"], fallbacks="default",
@@ -94,6 +96,26 @@ Ort: {f.get('ort', '')}
     if r.stop_reason == "refusal":
         return None
     return json.loads(next(b.text for b in r.content if b.type == "text"))
+
+
+def frage_cli(system, user):
+    """Claude Code headless (Abo statt API-Key). Antwort = JSON nach SCHEMA, wird hier geprueft."""
+    prompt = (f"{system}\n\n---\n\n{user}\n\nAntworte ausschließlich mit einem JSON-Objekt nach diesem Schema, "
+              f"ohne Text davor oder danach, ohne Codeblock:\n{json.dumps(SCHEMA, ensure_ascii=False)}")
+    r = subprocess.run(["claude", "-p", "--output-format", "json", "--model", "opus", "--max-turns", "1"],
+                       input=prompt, capture_output=True, text=True, encoding="utf-8", timeout=600)
+    try:
+        out = json.loads(r.stdout)
+        if out.get("is_error"):
+            print("Claude Code Fehler:", str(out.get("subtype"))[:60]); return None
+        t = out.get("result", "")
+        a = json.loads(t[t.find("{"):t.rfind("}") + 1])
+    except Exception:
+        print("Antwort nicht lesbar, rc", r.returncode, r.stderr[-200:].replace("\n", " ")); return None
+    fehlt = [k for k in SCHEMA["required"] if k not in a] + [k for k in ("an", "betreff", "anrede", "absaetze") if k not in a.get("brief", {})]
+    if fehlt or not isinstance(a.get("score"), int):
+        print("Antwort unvollständig:", fehlt[:5]); return None
+    return a
 
 
 def stellen_id(firma, vorhanden):
@@ -106,13 +128,13 @@ def stellen_id(firma, vorhanden):
 
 
 def main():
-    if not os.environ.get("ANTHROPIC_API_KEY"):
-        print("Kein ANTHROPIC_API_KEY - Pakete werden am PC gebaut"); return
+    if not (os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("CLAUDE_CODE_OAUTH_TOKEN")):
+        print("Kein Claude-Zugang (CLAUDE_CODE_OAUTH_TOKEN oder ANTHROPIC_API_KEY) - Pakete werden am PC gebaut"); return
     d, K, meta = crypt.open_(pathlib.Path("data.bin").read_bytes(), priv=crypt.private_key())
     offen = [f for f in d.get("funde", []) if f.get("status") in ("neu", "merken") and (f["score"] >= MIN_REGEL_SCORE or f["status"] == "merken")]
     if not offen:
         print("Keine neuen Funde"); return
-    client = anthropic.Anthropic()
+    client = anthropic.Anthropic() if os.environ.get("ANTHROPIC_API_KEY") else None
     heute = datetime.date.today()
     ort = d["absender"]["adresse"].split(",")[-1].strip().split(" ", 1)[-1]
     ort_datum = f"{ort}, {heute.day}. {MONATE[heute.month - 1]} {heute.year}"
@@ -120,7 +142,7 @@ def main():
     for f in offen[:MAX_PRO_LAUF]:
         try:
             a = frage(client, d, f)
-        except anthropic.APIError as e:
+        except (anthropic.APIError, subprocess.TimeoutExpired) as e:
             print("API-Fehler", type(e).__name__); continue
         if not a:
             f["status"] = "geprueft"; f["claude"] = "abgelehnt (refusal)"; continue

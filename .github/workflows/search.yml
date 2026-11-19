@@ -12,7 +12,7 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: "3.12"}
       - name: Vorbereiten
-        run: pip install -q cryptography playwright==1.48.0 anthropic && cp ../data.bin . && (sudo apt-get install -y -qq fonts-crosextra-carlito >/dev/null 2>&1 || true)
+        run: pip install -q cryptography playwright==1.48.0 anthropic && npm install -g -s @anthropic-ai/claude-code && cp ../data.bin . && (sudo apt-get install -y -qq fonts-crosextra-carlito >/dev/null 2>&1 || true)
       - name: karriere.at durchsuchen
         run: python cloud_search.py karriere
       - name: jobs.at durchsuchen
@@ -25,7 +25,7 @@ jobs:
         env: {RSA_KEY: "${{ secrets.RSA_KEY }}"}
         run: python cloud_search.py pruefen
       - name: Pakete bauen (Claude)
-        env: {RSA_KEY: "${{ secrets.RSA_KEY }}", ANTHROPIC_API_KEY: "${{ secrets.ANTHROPIC_API_KEY }}"}
+        env: {RSA_KEY: "${{ secrets.RSA_KEY }}", ANTHROPIC_API_KEY: "${{ secrets.ANTHROPIC_API_KEY }}", CLAUDE_CODE_OAUTH_TOKEN: "${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}"}
         run: python cloud_paket.py; cp data.bin ../data.bin
       - name: Ergebnis speichern
         working-directory: .
