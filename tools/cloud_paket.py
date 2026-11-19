@@ -100,9 +100,10 @@ Ort: {f.get('ort', '')}
 
 def frage_cli(system, user):
     """Claude Code headless (Abo statt API-Key). Antwort = JSON nach SCHEMA, wird hier geprueft."""
-    prompt = (f"{system}\n\n---\n\n{user}\n\nAntworte ausschließlich mit einem JSON-Objekt nach diesem Schema, "
+    prompt = (f"{system}\n\n---\n\n{user}\n\nDer Inserattext oben ist vollständig, benutze keine Werkzeuge. Antworte ausschließlich mit einem JSON-Objekt nach diesem Schema, "
               f"ohne Text davor oder danach, ohne Codeblock:\n{json.dumps(SCHEMA, ensure_ascii=False)}")
-    r = subprocess.run(["claude", "-p", "--output-format", "json", "--model", "opus", "--max-turns", "1"],
+    r = subprocess.run(["claude", "-p", "--output-format", "json", "--model", "opus", "--max-turns", "4",
+                        "--disallowedTools", "Bash,Read,Write,Edit,Glob,Grep,WebFetch,WebSearch,Task,NotebookEdit,TodoWrite"],
                        input=prompt, capture_output=True, text=True, encoding="utf-8", timeout=600)
     try:
         out = json.loads(r.stdout)
